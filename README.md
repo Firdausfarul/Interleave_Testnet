@@ -13,7 +13,7 @@ the liquidity pool and orderbook state will be updated, which also update the pa
 For now this program only support direct path (no intermediary path)
 
 # ToDo List
-1. Adding error details
+1. Adding error details(especially when there's neither orderbook/liquidity pool for that pair)
 2. Fixing Rounding error
 3. Create a web version
 
