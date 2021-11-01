@@ -151,6 +151,11 @@ else:
     send_amount1 = amount_sent_on_orderbook
     dest_min1 = round(amount_receive_ob * slippage, 6)
 
+print(dest_min1)
+print(dest_min2)
+print(send_amount1)
+print(send_amount2)
+
 stellar_account1 = server.load_account(acc.public_key)
 
 Transaction1 =(
@@ -166,7 +171,7 @@ Transaction1 =(
                 send_amount= str(send_amount1),
                 dest_code = asset_received.code,
                 dest_issuer = asset_received.issuer,
-                dest_min = str(dest_min2),
+                dest_min = str(dest_min1),
                 path = []
             )
             .append_path_payment_strict_send_op(
