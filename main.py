@@ -44,11 +44,11 @@ def orderbook_calc_send(amount_sent):
             amount_received=amount_received+float(ob_details['bids'][i]['amount'])
             amount_sent=amount_sent-depth[i]
             if(amount_sent==0):
-                return amount_received
+                return round(amount_received, 7)
         elif(amount_sent<depth[i]):
             amount_received=amount_received+round((amount_sent/depth[i])*float(ob_details['bids'][i]['amount']), 7)
             amount_sent=0
-            return amount_received
+            return round(amount_received, 7)
 
 def mix(amount_on_liqpool):
     total=liqpool_calc_send(amount_on_liqpool) + orderbook_calc_send(amount_sent-amount_on_liqpool)
@@ -110,7 +110,7 @@ liqpool_id = liqpool.liquidity_pool_id
 response = requests.get('https://horizon-testnet.stellar.org/liquidity_pools/'+liqpool_id)
 liqpool_details = response.json()
 #fetching orderbook details
-ob_details= server.orderbook(asset_sent, asset_received).call()
+ob_details= server.orderbook(asset_sent, asset_received).limit(100).call()
 
 received_lp=liqpool_calc_send(amount_sent)
 print('If trade was executed in Liquidity Pool only, You will get : '  +str(received_lp) + asset_received.code)
@@ -156,37 +156,39 @@ print(dest_min2)
 print(send_amount1)
 print(send_amount2)
 
-stellar_account1 = server.load_account(acc.public_key)
 
-Transaction1 =(
-            TransactionBuilder(
-                source_account=stellar_account1,
-                network_passphrase=Network.TESTNET_NETWORK_PASSPHRASE,
-                base_fee=base_fee,
+if(input() == 'Y'):
+    stellar_account1 = server.load_account(acc.public_key)
+
+    Transaction1 =(
+                TransactionBuilder(
+                    source_account=stellar_account1,
+                    network_passphrase=Network.TESTNET_NETWORK_PASSPHRASE,
+                    base_fee=base_fee,
+                )
+                .append_path_payment_strict_send_op(
+                    destination=acc.public_key,
+                    send_code=asset_sent.code,
+                    send_issuer=asset_sent.issuer,
+                    send_amount= str(send_amount1),
+                    dest_code = asset_received.code,
+                    dest_issuer = asset_received.issuer,
+                    dest_min = str(dest_min1),
+                    path = []
+                )
+                .append_path_payment_strict_send_op(
+                    destination=acc.public_key,
+                    send_code=asset_sent.code,
+                    send_issuer=asset_sent.issuer,
+                    send_amount=str(send_amount2),
+                    dest_code = asset_received.code,
+                    dest_issuer = asset_received.issuer,
+                    dest_min = str(dest_min2),
+                    path = []
+                )
+                .build()
             )
-            .append_path_payment_strict_send_op(
-                destination=acc.public_key,
-                send_code=asset_sent.code,
-                send_issuer=asset_sent.issuer,
-                send_amount= str(send_amount1),
-                dest_code = asset_received.code,
-                dest_issuer = asset_received.issuer,
-                dest_min = str(dest_min1),
-                path = []
-            )
-            .append_path_payment_strict_send_op(
-                destination=acc.public_key,
-                send_code=asset_sent.code,
-                send_issuer=asset_sent.issuer,
-                send_amount=str(send_amount2),
-                dest_code = asset_received.code,
-                dest_issuer = asset_received.issuer,
-                dest_min = str(dest_min2),
-                path = []
-            )
-            .build()
-        )
-#Signing+Submitting Transaction1
-Transaction1.sign(acc.secret)
-response = server.submit_transaction(Transaction1)
-print(response)
+    #Signing+Submitting Transaction1
+    Transaction1.sign(acc.secret)
+    response = server.submit_transaction(Transaction1)
+    print(response)

@@ -57,8 +57,8 @@ Transaction1 =(
     )
     .append_liquidity_pool_deposit_op(
         liquidity_pool_id=liq_pool.liquidity_pool_id,
-        max_price='1000000',
-        min_price='0.000001',
+        max_price='1.1',
+        min_price='0.9',
         max_amount_a='2000',
         max_amount_b='2000'
     )
