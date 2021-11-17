@@ -1,0 +1,2 @@
+fastapi
+stellar-sdk==5.0.0
