@@ -9,12 +9,14 @@ import {
   signTransaction,
 } from "@stellar/freighter-api";
 const reducer = (state, action) => {
-  if (action.type === "FETCH_AMOUNT") {
+  if (action.type === "LOGIN_FREIGHTER") {
+    console.log(action.payload);
     return {
       ...state,
-      amountReceive: action.payload,
+      account: action.payload,
     };
-  } else if (action.type === "SUBMIT_XDR") {
+  }
+  if (action.type === "SUBMIT_XDR") {
   } else if (action.type === "NO_VALUE") {
     return {
       ...state,
@@ -23,6 +25,7 @@ const reducer = (state, action) => {
     };
   } else if (action.type === "CHANGE_VALUE") {
     const { name, value } = action.payload;
+    console.log(name, value);
     if (name === "assetSend" || name === "assetReceive") {
       const [newCode, newIssuer] = value.split("_");
       return {
@@ -53,15 +56,15 @@ const reducer = (state, action) => {
 };
 
 const defaultState = {
-  account: "",
-  assetSend: { code: "", issuer: "" },
-  assetReceive: { code: "", issuer: "" },
-  amountSend: 0.0,
-  amountReceive: 0.0,
-  slippage: 0.0,
-  xdr: "",
+  account: null,
+  assetSend: null,
+  assetReceive: null,
+  amountSend: null,
+  amountReceive: null,
+  slippage: null,
+  xdr: null,
   isModalOpen: false,
-  modalContent: "",
+  modalContent: null,
 };
 
 const TransactionForm = () => {
@@ -90,7 +93,18 @@ const TransactionForm = () => {
 
   const handleChange = (e) => {
     const name = e.target.name;
-    const value = e.target.value;
+    let value = e.target.value;
+    if (
+      name === "amountSend" ||
+      name === "amountReceive" ||
+      name === "slippage"
+    ) {
+      if (value) {
+        value = parseFloat(value);
+      } else {
+        value = null;
+      }
+    }
     dispatch({ type: "CHANGE_VALUE", payload: { name, value } });
   };
   const closeModal = () => {
@@ -111,43 +125,67 @@ const TransactionForm = () => {
       if (error) {
         return error;
       }
-
+      console.log(publicKey);
       return publicKey;
     };
 
     const result = retrievePublicKey();
+    dispatch({ type: "LOGIN_FREIGHTER", payload: result });
+  };
+
+  const fetchUrl = async (url) => {
+    try {
+      console.log(url);
+      const response = await axios.get(url);
+      const data = response.data;
+      return data;
+    } catch (e) {
+      console.log(e);
+      dispatch({ type: "ERROR_FETCH" });
+    }
   };
 
   useEffect(() => {
     if (amountSend && assetSend && assetReceive) {
-      const interval = setInterval(async () => {
-        try {
-          console.log(assetSend, assetReceive);
-          let url = `https://wy6y1k.deta.dev/fetch_amount_receive?`;
-          const params = [];
-          params[0] = `asset_send_code=${assetSend.code}&`;
-          params[1] = `asset_send_issuer=${assetSend.issuer}&`;
-          params[2] = `asset_receive_code=${assetReceive.code}&`;
-          params[3] = `asset_receive_issuer=${assetReceive.issuer}&`;
-          params[4] = `amount_send=${amountSend}`;
-          params.forEach((param) => {
-            url += param;
-          });
-          console.log(url);
-          const response = await axios.get(url);
-          const data = await response.json();
-          console.log(data);
-          const newAmountReceive = data.amount_receive;
-          dispatch({ type: "FETCH_AMOUNT", payload: newAmountReceive });
-        } catch (e) {
-          console.log(e);
-          dispatch({ type: "ERROR_FETCH" });
-        }
+      console.log(amountSend, assetSend, assetReceive);
+      const url = "https://wy6y1k.deta.dev/fetch_amount_receive?";
+      const params = [];
+      params[0] = `asset_send_code=${assetSend.code}&`;
+      params[1] = `asset_send_issuer=${assetSend.issuer}&`;
+      params[2] = `asset_receive_code=${assetReceive.code}&`;
+      params[3] = `asset_receive_issuer=${assetReceive.issuer}&`;
+      params[4] = `amount_send=${amountSend}`;
+      params.forEach((param) => {
+        url += param;
+      });
+      const name = "amountReceive";
+      const value = fetchUrl(url).then((data) => data.amount_receive);
+      dispatch({
+        type: "CHANGE_VALUE",
+        payload: { name, value },
+      });
+
+      const interval = setInterval(() => {
+        const newAmountReceive = fetchUrl(url).then(
+          (data) => data.amount_receive
+        );
+        console.log("ulang");
+        dispatch({
+          type: "CHANGE_VALUE",
+          payload: { amountReceive, newAmountReceive },
+        });
       }, 10000);
 
       return () => clearInterval(interval);
+    } else if (!amountSend) {
+      const name = "amountReceive";
+      const value = null;
+      dispatch({
+        type: "CHANGE_VALUE",
+        payload: { name, value },
+      });
     }
-  });
+  }, [amountSend, assetSend, assetReceive]);
 
   return (
     <>
@@ -165,6 +203,7 @@ const TransactionForm = () => {
             name="amountSend"
             value={amountSend}
             onChange={handleChange}
+            placeholder="0.0000000"
           />
         </div>
         <div className="form-control">
@@ -183,7 +222,8 @@ const TransactionForm = () => {
             id="amountReceive"
             name="amountReceive"
             value={amountReceive}
-            readOnly
+            onChange={handleChange}
+            placeholder="0.0000000"
           />
         </div>
         <div className="form-control">
@@ -198,11 +238,14 @@ const TransactionForm = () => {
           <label htmlFor="slippage">Slippage : </label>
           <input
             type="number"
-            step={0.0000001}
+            step={0.01}
             id="slippage"
             name="slippage"
             value={slippage}
             onChange={handleChange}
+            placeholder="value between 0-1"
+            max="1.00"
+            min="0.00"
           />
         </div>
         <button type="submit">submit</button>
