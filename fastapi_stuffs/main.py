@@ -174,7 +174,7 @@ def main(*, public_key = None, asset_send_code, asset_send_issuer, asset_receive
         total_receive = received_interleave[i]
         
         if operation_detail == "fetch_amount_receive":
-            main.amount_sent.append(total_receive-(1-slippage))
+            main.amount_sent.append(total_receive*(1-slippage))
             continue
 
         # determining the operation order
@@ -246,8 +246,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app = FastAPI()
-
 @app.get("/fetch_xdr", response_model=XDR)
 def fetch_xdr(*, public_key: str, asset_send_code: str, asset_send_issuer: Optional[str] = None, 
             asset_receive_code: str, asset_receive_issuer: Optional[str] = None, 
@@ -280,6 +278,8 @@ def fetch_amount_receive(*, asset_send_code: str, asset_send_issuer: Optional[st
     )
     
     return {"amount_receive": amount_receive}
+
+# uncomment to check and debug
 
 # print(fetch_xdr(
 #         public_key='GCGZZQNPC3KO2LV56EN2WLOGGRCREH5T7BK6EZ6L3FQOH6W73SEZITBW', 
