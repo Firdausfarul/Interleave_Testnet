@@ -1,13 +1,13 @@
 import "./App.css";
 import React from "react";
 import Navbar from "./Navbar";
-import Transaction from "./Transaction";
+import TransactionForm from "./TransactionForm";
 
 function App() {
   return (
     <React.Fragment>
       <Navbar />
-      <Transaction />
+      <TransactionForm />
     </React.Fragment>
   );
 }
