@@ -1,22 +1,22 @@
 {
   "files": {
-    "main.css": "/Interleave_Testnet/static/css/main.a9d26fb1.chunk.css",
-    "main.js": "/Interleave_Testnet/static/js/main.72b418b7.chunk.js",
-    "main.js.map": "/Interleave_Testnet/static/js/main.72b418b7.chunk.js.map",
-    "runtime-main.js": "/Interleave_Testnet/static/js/runtime-main.a425cd8e.js",
-    "runtime-main.js.map": "/Interleave_Testnet/static/js/runtime-main.a425cd8e.js.map",
-    "static/js/2.b6ada803.chunk.js": "/Interleave_Testnet/static/js/2.b6ada803.chunk.js",
-    "static/js/2.b6ada803.chunk.js.map": "/Interleave_Testnet/static/js/2.b6ada803.chunk.js.map",
-    "static/js/3.1ad73a81.chunk.js": "/Interleave_Testnet/static/js/3.1ad73a81.chunk.js",
-    "static/js/3.1ad73a81.chunk.js.map": "/Interleave_Testnet/static/js/3.1ad73a81.chunk.js.map",
-    "index.html": "/Interleave_Testnet/index.html",
-    "static/css/main.a9d26fb1.chunk.css.map": "/Interleave_Testnet/static/css/main.a9d26fb1.chunk.css.map",
-    "static/js/2.b6ada803.chunk.js.LICENSE.txt": "/Interleave_Testnet/static/js/2.b6ada803.chunk.js.LICENSE.txt",
-    "static/media/Neptunus Text Right 1.7e349a79.png": "/Interleave_Testnet/static/media/Neptunus Text Right 1.7e349a79.png"
+    "main.css": "/Interleave_Testnet_Frontend/static/css/main.a9d26fb1.chunk.css",
+    "main.js": "/Interleave_Testnet_Frontend/static/js/main.72b418b7.chunk.js",
+    "main.js.map": "/Interleave_Testnet_Frontend/static/js/main.72b418b7.chunk.js.map",
+    "runtime-main.js": "/Interleave_Testnet_Frontend/static/js/runtime-main.f213c63e.js",
+    "runtime-main.js.map": "/Interleave_Testnet_Frontend/static/js/runtime-main.f213c63e.js.map",
+    "static/js/2.b94926cb.chunk.js": "/Interleave_Testnet_Frontend/static/js/2.b94926cb.chunk.js",
+    "static/js/2.b94926cb.chunk.js.map": "/Interleave_Testnet_Frontend/static/js/2.b94926cb.chunk.js.map",
+    "static/js/3.1ad73a81.chunk.js": "/Interleave_Testnet_Frontend/static/js/3.1ad73a81.chunk.js",
+    "static/js/3.1ad73a81.chunk.js.map": "/Interleave_Testnet_Frontend/static/js/3.1ad73a81.chunk.js.map",
+    "index.html": "/Interleave_Testnet_Frontend/index.html",
+    "static/css/main.a9d26fb1.chunk.css.map": "/Interleave_Testnet_Frontend/static/css/main.a9d26fb1.chunk.css.map",
+    "static/js/2.b94926cb.chunk.js.LICENSE.txt": "/Interleave_Testnet_Frontend/static/js/2.b94926cb.chunk.js.LICENSE.txt",
+    "static/media/Neptunus Text Right 1.7e349a79.png": "/Interleave_Testnet_Frontend/static/media/Neptunus Text Right 1.7e349a79.png"
   },
   "entrypoints": [
-    "static/js/runtime-main.a425cd8e.js",
-    "static/js/2.b6ada803.chunk.js",
+    "static/js/runtime-main.f213c63e.js",
+    "static/js/2.b94926cb.chunk.js",
     "static/css/main.a9d26fb1.chunk.css",
     "static/js/main.72b418b7.chunk.js"
   ]
