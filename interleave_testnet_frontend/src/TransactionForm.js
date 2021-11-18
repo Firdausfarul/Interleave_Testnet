@@ -9,13 +9,6 @@ import {
   signTransaction,
 } from "@stellar/freighter-api";
 const reducer = (state, action) => {
-  if (action.type === "LOGIN_FREIGHTER") {
-    console.log(action.payload);
-    return {
-      ...state,
-      account: action.payload,
-    };
-  }
   if (action.type === "SUBMIT_XDR") {
   } else if (action.type === "NO_VALUE") {
     return {
@@ -56,7 +49,7 @@ const reducer = (state, action) => {
 };
 
 const defaultState = {
-  account: null,
+  publicKey: null,
   assetSend: null,
   assetReceive: null,
   amountSend: null,
@@ -70,7 +63,7 @@ const defaultState = {
 const TransactionForm = () => {
   const [state, dispatch] = useReducer(reducer, defaultState);
   const {
-    account,
+    publicKey,
     assetSend,
     assetReceive,
     amountSend,
@@ -83,7 +76,6 @@ const TransactionForm = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log(assetSend, assetReceive);
     if (amountSend && slippage && xdr) {
       dispatch({ type: "SUBMIT_XDR" });
     } else {
@@ -129,8 +121,9 @@ const TransactionForm = () => {
       return publicKey;
     };
 
-    const result = retrievePublicKey();
-    dispatch({ type: "LOGIN_FREIGHTER", payload: result });
+    const name = "publicKey";
+    const value = retrievePublicKey().then((publicKey) => publicKey);
+    dispatch({ type: "", payload: { name, value } });
   };
 
   const fetchUrl = async (url) => {
@@ -145,10 +138,22 @@ const TransactionForm = () => {
     }
   };
 
+  const getAmountReceive = async (url) => {
+    const name = "amountReceive";
+    const value = await fetchUrl(url).then((data) => {
+      console.log(data.amount_receive);
+      return data.amount_receive;
+    });
+    console.log(`the value is ${value}`);
+    dispatch({
+      type: "CHANGE_VALUE",
+      payload: { name, value },
+    });
+  };
+
   useEffect(() => {
     if (amountSend && assetSend && assetReceive) {
-      console.log(amountSend, assetSend, assetReceive);
-      const url = "https://wy6y1k.deta.dev/fetch_amount_receive?";
+      let url = "https://wy6y1k.deta.dev/fetch_amount_receive?";
       const params = [];
       params[0] = `asset_send_code=${assetSend.code}&`;
       params[1] = `asset_send_issuer=${assetSend.issuer}&`;
@@ -158,22 +163,9 @@ const TransactionForm = () => {
       params.forEach((param) => {
         url += param;
       });
-      const name = "amountReceive";
-      const value = fetchUrl(url).then((data) => data.amount_receive);
-      dispatch({
-        type: "CHANGE_VALUE",
-        payload: { name, value },
-      });
-
+      getAmountReceive(url);
       const interval = setInterval(() => {
-        const newAmountReceive = fetchUrl(url).then(
-          (data) => data.amount_receive
-        );
-        console.log("ulang");
-        dispatch({
-          type: "CHANGE_VALUE",
-          payload: { amountReceive, newAmountReceive },
-        });
+        getAmountReceive(url);
       }, 10000);
 
       return () => clearInterval(interval);
@@ -189,6 +181,8 @@ const TransactionForm = () => {
 
   return (
     <>
+      {isConnected() && <h1>user connected</h1>}
+      {publicKey && <h1>user has login</h1>}
       <button onClick={loginFreighter}>login</button>
       {isModalOpen && (
         <Modal closeModal={closeModal} modalContent={modalContent} />
