@@ -1,64 +1,16 @@
 import React, { useEffect, useReducer } from "react";
 import Modal from "./Modal";
 import { listAsset } from "./listAsset";
-import Asset from "./Asset";
+import { reducer } from "./reducer";
+import { defaultState } from "./defaultState";
+import { Asset } from "./Asset";
 import axios from "axios";
 import {
   isConnected,
   getPublicKey,
   signTransaction,
 } from "@stellar/freighter-api";
-const reducer = (state, action) => {
-  if (action.type === "SUBMIT_XDR") {
-  } else if (action.type === "NO_VALUE") {
-    return {
-      ...state,
-      isModalOpen: true,
-      modalContent: "please enter value",
-    };
-  } else if (action.type === "CHANGE_VALUE") {
-    const { name, value } = action.payload;
-    console.log(name, value);
-    if (name === "assetSend" || name === "assetReceive") {
-      const [newCode, newIssuer] = value.split("_");
-      return {
-        ...state,
-        [name]: {
-          code: newCode,
-          issuer: newIssuer,
-        },
-      };
-    }
-    return {
-      ...state,
-      [name]: value,
-    };
-  } else if (action.type === "ERROR_FETCH") {
-    return {
-      ...state,
-      isModalOpen: true,
-      modalContent: "cannot fetch url",
-    };
-  } else if (action.type === "CLOSE_MODAL") {
-    return {
-      ...state,
-      isModalOpen: false,
-      modalContent: "",
-    };
-  }
-};
-
-const defaultState = {
-  publicKey: null,
-  assetSend: null,
-  assetReceive: null,
-  amountSend: null,
-  amountReceive: null,
-  slippage: null,
-  xdr: null,
-  isModalOpen: false,
-  modalContent: null,
-};
+import StellarSdk from "stellar-sdk";
 
 const TransactionForm = () => {
   const [state, dispatch] = useReducer(reducer, defaultState);
@@ -74,10 +26,69 @@ const TransactionForm = () => {
     modalContent,
   } = state;
 
+  const fetchUrl = async (url) => {
+    try {
+      const response = await axios.get(url);
+      const data = response.data;
+      return data;
+    } catch (e) {
+      console.log(e);
+      dispatch({ type: "ERROR_FETCH" });
+    }
+  };
+  const submitXDR = async (url) => {
+    try {
+      const name = "xdr";
+      const data = await fetchUrl(url);
+      let value = data.xdr;
+      console.log(name, value);
+      dispatch({
+        type: "CHANGE_VALUE",
+        payload: { name, value },
+      });
+      value = await signTransaction(xdr, "TESTNET");
+      dispatch({
+        type: "CHANGE_VALUE",
+        payload: { name, value },
+      });
+      console.log("the transaction", xdr);
+      const SERVER_URL = "https://horizon-testnet.stellar.org";
+      const server = new StellarSdk.Server(SERVER_URL);
+      const transactionToSubmit = StellarSdk.TransactionBuilder.fromXDR(
+        xdr,
+        SERVER_URL
+      );
+      const response = await server.submitTransaction(transactionToSubmit);
+      console.log(response);
+      dispatch({ type: "SUCCESS_SUBMIT" });
+    } catch {
+      dispatch({ type: "CANNOT_SUBMIT" });
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (amountSend && slippage && xdr) {
-      dispatch({ type: "SUBMIT_XDR" });
+    if (
+      publicKey &&
+      assetSend &&
+      assetReceive &&
+      amountSend &&
+      amountReceive &&
+      slippage
+    ) {
+      let url = "https://wy6y1k.deta.dev/fetch_xdr?";
+      const params = [];
+      params[0] = `public_key=${publicKey}&`;
+      params[1] = `asset_send_code=${assetSend.code}&`;
+      params[2] = `asset_send_issuer=${assetSend.issuer}&`;
+      params[3] = `asset_receive_code=${assetReceive.code}&`;
+      params[4] = `asset_receive_issuer=${assetReceive.issuer}&`;
+      params[5] = `amount_send=${amountSend}&`;
+      params[6] = `slippage=${slippage}`;
+      params.forEach((param) => {
+        url += param;
+      });
+      submitXDR(url);
     } else {
       dispatch({ type: "NO_VALUE" });
     }
@@ -94,7 +105,7 @@ const TransactionForm = () => {
       if (value) {
         value = parseFloat(value);
       } else {
-        value = null;
+        value = "";
       }
     }
     dispatch({ type: "CHANGE_VALUE", payload: { name, value } });
@@ -103,48 +114,29 @@ const TransactionForm = () => {
     dispatch({ type: "CLOSE_MODAL" });
   };
 
-  const loginFreighter = () => {
-    const retrievePublicKey = async () => {
-      let publicKey = "";
-      let error = "";
+  const retrievePublicKey = async () => {
+    let publicKey = "";
+    let error = "";
 
-      try {
-        publicKey = await getPublicKey();
-      } catch (e) {
-        error = e;
-      }
-
-      if (error) {
-        return error;
-      }
-      console.log(publicKey);
-      return publicKey;
-    };
-
-    const name = "publicKey";
-    const value = retrievePublicKey().then((publicKey) => publicKey);
-    dispatch({ type: "", payload: { name, value } });
-  };
-
-  const fetchUrl = async (url) => {
     try {
-      console.log(url);
-      const response = await axios.get(url);
-      const data = response.data;
-      return data;
+      publicKey = await getPublicKey();
     } catch (e) {
-      console.log(e);
-      dispatch({ type: "ERROR_FETCH" });
+      error = e;
     }
+
+    if (error) {
+      return error;
+    }
+    const name = "publicKey";
+    const value = publicKey;
+    dispatch({ type: "CHANGE_VALUE", payload: { name, value } });
   };
 
   const getAmountReceive = async (url) => {
     const name = "amountReceive";
     const value = await fetchUrl(url).then((data) => {
-      console.log(data.amount_receive);
       return data.amount_receive;
     });
-    console.log(`the value is ${value}`);
     dispatch({
       type: "CHANGE_VALUE",
       payload: { name, value },
@@ -171,7 +163,7 @@ const TransactionForm = () => {
       return () => clearInterval(interval);
     } else if (!amountSend) {
       const name = "amountReceive";
-      const value = null;
+      const value = "";
       dispatch({
         type: "CHANGE_VALUE",
         payload: { name, value },
@@ -182,8 +174,12 @@ const TransactionForm = () => {
   return (
     <>
       {isConnected() && <h1>user connected</h1>}
-      {publicKey && <h1>user has login</h1>}
-      <button onClick={loginFreighter}>login</button>
+      {publicKey ? (
+        <h1>{publicKey}</h1>
+      ) : (
+        <button onClick={retrievePublicKey}>login</button>
+      )}
+
       {isModalOpen && (
         <Modal closeModal={closeModal} modalContent={modalContent} />
       )}
@@ -242,7 +238,12 @@ const TransactionForm = () => {
             min="0.00"
           />
         </div>
-        <button type="submit">submit</button>
+        {}
+        {publicKey ? (
+          <button type="submit">submit</button>
+        ) : (
+          <button onClick={retrievePublicKey}>login</button>
+        )}
       </form>
     </>
   );
