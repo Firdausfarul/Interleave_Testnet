@@ -1,0 +1,1 @@
+{"id":"c5435ff6-f85e-46a7-a82a-1abc6f4c4d2d","space":13402,"runtime":"python3.9","name":"interleave_testnet_backend","path":"73rfzw","project":"c0fpv7nu","account":"144798365827","region":"ap-southeast-1","deps":["fastapi","stellar-sdk==5.0.0"],"envs":null,"public":true,"log_level":"debug","cron":""}

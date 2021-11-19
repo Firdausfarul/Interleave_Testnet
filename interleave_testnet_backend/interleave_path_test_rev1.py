@@ -1,8 +1,3 @@
-from fastapi import FastAPI
-from pydantic import BaseModel
-from typing import Optional
-from fastapi.middleware.cors import CORSMiddleware
-
 import json
 import random
 import time
@@ -181,6 +176,9 @@ def main(*, public_key = None, asset_send_code, asset_send_issuer, asset_receive
         path_amount_liqpool = max(liqpool_calc_send(amount_sent_on_liqpool[i]), orderbook_calc_send(amount_sent_on_liqpool[i]))
         path_amount_orderbook = max(liqpool_calc_send(amount_sent_on_orderbook[i]), orderbook_calc_send(amount_sent_on_orderbook[i]))
 
+        performance = received_interleave[i] - path_amount_liqpool
+        print(performance)
+
         amount_receive_lp[i] = liqpool_calc_send(amount_sent_on_liqpool[i])
         amount_receive_ob[i] = orderbook_calc_send(amount_sent_on_orderbook[i])
         slippage = float(slippage) / 100
@@ -227,74 +225,22 @@ def main(*, public_key = None, asset_send_code, asset_send_issuer, asset_receive
     Transaction1=Transaction1.build().to_xdr()
     return Transaction1
 
-
-class XDR(BaseModel):
-    xdr: str
-
-class amount_receive(BaseModel):
-    amount_receive: float
-
-app = FastAPI()
-
-origins = ["*"]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-@app.get("/fetch_xdr", response_model=XDR)
-def fetch_xdr(*, public_key: str, asset_send_code: str, asset_send_issuer: Optional[str] = None, 
-            asset_receive_code: str, asset_receive_issuer: Optional[str] = None, 
-            amount_send: str, slippage: float):
-    
-    xdr = main (
-        public_key=public_key,
-        asset_send_code=asset_send_code,
-        asset_send_issuer=asset_send_issuer,
-        asset_receive_code=asset_receive_code,
-        asset_receive_issuer=asset_receive_issuer,
-        amount_send=amount_send,
-        slippage=slippage,
-        operation_detail="fetch_xdr"
-    )
-    
-    return {"xdr": xdr}
-
-@app.get("/fetch_amount_receive", response_model=amount_receive)
-def fetch_amount_receive(*, asset_send_code: str, asset_send_issuer: Optional[str] = None, 
-            asset_receive_code: str, asset_receive_issuer: Optional[str] = None, amount_send: str):
-    
-    amount_receive = main (
-        asset_send_code=asset_send_code,
-        asset_send_issuer=asset_send_issuer,
-        asset_receive_code=asset_receive_code,
-        asset_receive_issuer=asset_receive_issuer,
-        amount_send=amount_send,
-        operation_detail="fetch_amount_receive"
-    )
-    
-    return {"amount_receive": amount_receive}
-
 # uncomment to check and debug
 
 # print(fetch_xdr(
-#         public_key='GCGZZQNPC3KO2LV56EN2WLOGGRCREH5T7BK6EZ6L3FQOH6W73SEZITBW', 
-#         asset_send_code='TERN', 
+#         public_key='GBSIWZXGNDIRQHTJ4T4G5JMTXLBFASQBRDPX22PESIGJRFZDENYN4END', 
+#         asset_send_code='AQUA', 
 #         asset_send_issuer='GAZDAUCRI3E7APVYGOPLLS6CMMCCXTUZ6ZKWPOS2EMOOGIGOIQWHWYTQ',
-#         asset_receive_code='AQUA', 
+#         asset_receive_code='TERN', 
 #         asset_receive_issuer='GAZDAUCRI3E7APVYGOPLLS6CMMCCXTUZ6ZKWPOS2EMOOGIGOIQWHWYTQ',
 #         amount_send='5',
 #         slippage=0.01,
 #     )
 # )
 # print(fetch_amount_receive(
-#         asset_send_code='TERN', 
+#         asset_send_code='AQUA', 
 #         asset_send_issuer='GAZDAUCRI3E7APVYGOPLLS6CMMCCXTUZ6ZKWPOS2EMOOGIGOIQWHWYTQ',
-#         asset_receive_code='AQUA', 
+#         asset_receive_code='TERN', 
 #         asset_receive_issuer='GAZDAUCRI3E7APVYGOPLLS6CMMCCXTUZ6ZKWPOS2EMOOGIGOIQWHWYTQ',
 #         amount_send='5',
 #     )
