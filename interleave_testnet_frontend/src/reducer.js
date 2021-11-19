@@ -1,21 +1,25 @@
 export const reducer = (state, action) => {
-  if (action.type === "SUCCESS_SUBMIT") {
+  if (action.type === "SUCCESS_SUBMIT_XDR") {
     return {
       ...state,
-      isModalOpen: true,
-      modalContent: "success submit xdr",
+      isNotificationOpen: true,
+      notificationContent: "Transaction Success",
+      notificationColor: "#2eb94c",
     };
-  } else if (action.type === "CANNOT_SUBMIT") {
+  } else if (action.type === "CANNOT_SUBMIT_XDR") {
     return {
       ...state,
-      isModalOpen: true,
-      modalContent: "cannot submit xdr",
+      isNotificationOpen: true,
+      notificationContent: "Transaction Failed",
+      notificationColor: "#ec5f0d",
     };
   } else if (action.type === "NO_VALUE") {
     return {
       ...state,
-      isModalOpen: true,
-      modalContent: "please enter value",
+      isNotificationOpen: true,
+      notificationContent:
+        "Please Enter Amount Send, Asset Send, and Asset Receive",
+      notificationColor: "#ec5f0d",
     };
   } else if (action.type === "CHANGE_VALUE") {
     const { name, value } = action.payload;
@@ -36,14 +40,16 @@ export const reducer = (state, action) => {
   } else if (action.type === "ERROR_FETCH") {
     return {
       ...state,
-      isModalOpen: true,
-      modalContent: "cannot fetch url",
+      isNotificationOpen: true,
+      notificationContent: "Error Retrieve Data",
+      notificationColor: "#ec5f0d",
     };
-  } else if (action.type === "CLOSE_MODAL") {
+  } else if (action.type === "CLOSE_NOTIFICATION") {
     return {
       ...state,
-      isModalOpen: false,
-      modalContent: "",
+      isNotificationOpen: false,
+      notificationContent: null,
+      notificationColor: null,
     };
   }
 };

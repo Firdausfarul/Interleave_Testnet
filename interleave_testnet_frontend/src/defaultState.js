@@ -6,6 +6,7 @@ export const defaultState = {
   amountReceive: "",
   slippage: "",
   xdr: null,
-  isModalOpen: false,
-  modalContent: null,
+  isNotificationOpen: false,
+  notificationContent: null,
+  notificationColor: null,
 };

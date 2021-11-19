@@ -1,13 +1,12 @@
 import React from "react";
 import logo from "./asset/Neptunus Text Right 1.png";
 
-const Navbar = () => {
+const Navbar = ({ publicKey }) => {
   return (
-    <nav className="navbar">
-      <div className="navbar-logo">
-        <img src={logo} alt="logo" />
-      </div>
-    </nav>
+    <header>
+      <img src={logo} height="45" alt="" className="logo" />
+      {publicKey && <button className="account">{publicKey}</button>}
+    </header>
   );
 };
 
