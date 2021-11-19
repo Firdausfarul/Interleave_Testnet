@@ -21,20 +21,20 @@ def floor(num, dec_point):
 def liqpool_calc_send(amount_sent):
     balance = [0,0]
     amount_sent=floor(amount_sent*0.997, 7)
-    if(main.asset_send.type != 'native'):
-        asset_info = main.asset_send.code +':' + main.asset_send.issuer
+    if(testnet_main.asset_send.type != 'native'):
+        asset_info = testnet_main.asset_send.code +':' + testnet_main.asset_send.issuer
     else :
         asset_info = 'native'
-    balance[0]=float(main.liqpool_details['reserves'][0]['amount']) #balanceA
-    balance[1]=float(main.liqpool_details['reserves'][1]['amount']) #balanceB
+    balance[0]=float(testnet_main.liqpool_details['reserves'][0]['amount']) #balanceA
+    balance[1]=float(testnet_main.liqpool_details['reserves'][1]['amount']) #balanceB
     pool_product=balance[0]*balance[1]
-    if(main.asset_send.order == 0):
+    if(testnet_main.asset_send.order == 0):
         balance_after=balance[0]+amount_sent
         z=pool_product/balance_after
         amount_received=floor((balance[1]-z), 7)
         #print((balance[1] - amount_received) * (balance[0] + amount_sent))
         return amount_received
-    elif(main.asset_send.order == 1):
+    elif(testnet_main.asset_send.order == 1):
         balance_after=balance[1]+amount_sent
         z=pool_product/balance_after
         amount_received = floor((balance[0]-z), 7)
@@ -45,20 +45,20 @@ def liqpool_calc_send(amount_sent):
 def orderbook_calc_send(amount_sent):
     depth=[]
     amount_received=0
-    for i in range(len(main.ob_details['bids'])):
-        depth.append(floor(1/float(main.ob_details['bids'][i]['price'])*float(main.ob_details['bids'][i]['amount']), 7))
+    for i in range(len(testnet_main.ob_details['bids'])):
+        depth.append(floor(1/float(testnet_main.ob_details['bids'][i]['price'])*float(testnet_main.ob_details['bids'][i]['amount']), 7))
         if(amount_sent>=depth[i]):
-            amount_received=amount_received+float(main.ob_details['bids'][i]['amount'])
+            amount_received=amount_received+float(testnet_main.ob_details['bids'][i]['amount'])
             amount_sent=amount_sent-depth[i]
             if(amount_sent==0):
                 return floor(amount_received, 7)
         elif(amount_sent<depth[i]):
-            amount_received=amount_received+floor((amount_sent/depth[i])*float(main.ob_details['bids'][i]['amount']), 7)
+            amount_received=amount_received+floor((amount_sent/depth[i])*float(testnet_main.ob_details['bids'][i]['amount']), 7)
             amount_sent=0
             return floor(amount_received, 7)
 
 def mix(i, amount_on_liqpool):
-    total=liqpool_calc_send(amount_on_liqpool) + orderbook_calc_send(main.amount_sent[i]-amount_on_liqpool)
+    total=liqpool_calc_send(amount_on_liqpool) + orderbook_calc_send(testnet_main.amount_sent[i]-amount_on_liqpool)
     return floor(total, 7)
 
 #Finding the best combination of LP:Orderbook using ternary search
@@ -78,11 +78,11 @@ def best_mix_calc_send(i, amount_sent):
     l=floor(l, 7)
     return l #returning the amount sent that should be sent to liquidity pool
 
-def main(*, public_key = None, asset_send_code, asset_send_issuer, asset_receive_code,
+def testnet_main(*, public_key = None, asset_send_code, asset_send_issuer, asset_receive_code,
          asset_receive_issuer, amount_send, slippage = 0, operation_detail):
 
     asset=[]
-    main.amount_sent=[]
+    testnet_main.amount_sent=[]
     send_amount1=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     send_amount2=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     dest_min1=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
@@ -107,17 +107,17 @@ def main(*, public_key = None, asset_send_code, asset_send_issuer, asset_receive
                 asset.append(Asset('XLM'))
     
     amount_send=floor(float(amount_send), 7)
-    main.amount_sent.append(amount_send)
+    testnet_main.amount_sent.append(amount_send)
 
     # setting the asset send and asset receive
-    main.asset_send = Asset(asset_send_code, asset_send_issuer)
+    testnet_main.asset_send = Asset(asset_send_code, asset_send_issuer)
     asset_receive = Asset(asset_receive_code, asset_receive_issuer)
 
     destine=[asset_receive]
 
     pathresp = server.strict_send_paths(
-        source_asset=main.asset_send,
-        source_amount=str(main.amount_sent[0]),
+        source_asset=testnet_main.asset_send,
+        source_amount=str(testnet_main.amount_sent[0]),
         destination=destine
     ).call()
     path=pathresp['_embedded']['records']
@@ -145,7 +145,7 @@ def main(*, public_key = None, asset_send_code, asset_send_issuer, asset_receive
     for i in range(len(pathAsset)):
         pathAsset[i]=Asset(pathAsset[i]['asset_code'], pathAsset[i]['asset_issuer'])
 
-    pathAsset.insert(0, main.asset_send)
+    pathAsset.insert(0, testnet_main.asset_send)
     pathAsset.append(asset_receive)
 
     total_receive = 0
@@ -159,17 +159,17 @@ def main(*, public_key = None, asset_send_code, asset_send_issuer, asset_receive
             pathAsset[i].order = 1
         liqpool_id = liqpool.liquidity_pool_id
         response = requests.get('https://horizon-testnet.stellar.org/liquidity_pools/' + liqpool_id)
-        main.liqpool_details = response.json()
+        testnet_main.liqpool_details = response.json()
         # fetching orderbook details
-        main.ob_details = server.orderbook(pathAsset[i], pathAsset[i+1]).limit(100).call()
+        testnet_main.ob_details = server.orderbook(pathAsset[i], pathAsset[i+1]).limit(100).call()
 
-        amount_sent_on_liqpool[i] = best_mix_calc_send(i, main.amount_sent[i])
-        amount_sent_on_orderbook[i] = main.amount_sent[i] - amount_sent_on_liqpool[i]
+        amount_sent_on_liqpool[i] = best_mix_calc_send(i, testnet_main.amount_sent[i])
+        amount_sent_on_orderbook[i] = testnet_main.amount_sent[i] - amount_sent_on_liqpool[i]
         received_interleave[i] = mix(i, amount_sent_on_liqpool[i])
         total_receive = received_interleave[i]
         
         if operation_detail == "fetch_amount_receive":
-            main.amount_sent.append(total_receive*(1-slippage))
+            testnet_main.amount_sent.append(total_receive*(1-slippage))
             continue
 
         # determining the operation order
@@ -177,7 +177,7 @@ def main(*, public_key = None, asset_send_code, asset_send_issuer, asset_receive
         path_amount_orderbook = max(liqpool_calc_send(amount_sent_on_orderbook[i]), orderbook_calc_send(amount_sent_on_orderbook[i]))
 
         performance = received_interleave[i] - path_amount_liqpool
-        print(performance)
+        # print(performance)
 
         amount_receive_lp[i] = liqpool_calc_send(amount_sent_on_liqpool[i])
         amount_receive_ob[i] = orderbook_calc_send(amount_sent_on_orderbook[i])
@@ -217,7 +217,7 @@ def main(*, public_key = None, asset_send_code, asset_send_issuer, asset_receive
                 dest_min=str(dest_min2[i]),
                 path=[]
             )
-        main.amount_sent.append(dest_min1[i]+dest_min2[i])
+        testnet_main.amount_sent.append(dest_min1[i]+dest_min2[i])
     
     if operation_detail == "fetch_amount_receive":
         return total_receive
@@ -225,23 +225,3 @@ def main(*, public_key = None, asset_send_code, asset_send_issuer, asset_receive
     Transaction1=Transaction1.build().to_xdr()
     return Transaction1
 
-# uncomment to check and debug
-
-# print(fetch_xdr(
-#         public_key='GBSIWZXGNDIRQHTJ4T4G5JMTXLBFASQBRDPX22PESIGJRFZDENYN4END', 
-#         asset_send_code='AQUA', 
-#         asset_send_issuer='GAZDAUCRI3E7APVYGOPLLS6CMMCCXTUZ6ZKWPOS2EMOOGIGOIQWHWYTQ',
-#         asset_receive_code='TERN', 
-#         asset_receive_issuer='GAZDAUCRI3E7APVYGOPLLS6CMMCCXTUZ6ZKWPOS2EMOOGIGOIQWHWYTQ',
-#         amount_send='5',
-#         slippage=0.01,
-#     )
-# )
-# print(fetch_amount_receive(
-#         asset_send_code='AQUA', 
-#         asset_send_issuer='GAZDAUCRI3E7APVYGOPLLS6CMMCCXTUZ6ZKWPOS2EMOOGIGOIQWHWYTQ',
-#         asset_receive_code='TERN', 
-#         asset_receive_issuer='GAZDAUCRI3E7APVYGOPLLS6CMMCCXTUZ6ZKWPOS2EMOOGIGOIQWHWYTQ',
-#         amount_send='5',
-#     )
-# )

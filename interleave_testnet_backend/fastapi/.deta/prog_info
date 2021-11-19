@@ -1,0 +1,1 @@
+{"id":"83d0579c-cff9-4f49-8950-a0a265deff56","space":13402,"runtime":"python3.9","name":"fastapi","path":"ph7wlb","project":"c0fpv7nu","account":"144798365827","region":"ap-southeast-1","deps":["fastapi","stellar-sdk==5.0.0"],"envs":null,"public":true,"log_level":"debug","cron":""}
