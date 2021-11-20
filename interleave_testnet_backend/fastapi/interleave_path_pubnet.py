@@ -132,6 +132,8 @@ def pubnet_main(*, public_key = None, asset_send_code, asset_send_issuer, asset_
         ).add_text_memo('AMOGUS')
 
     pathAsset=path[0]['path']
+    # print(pathAsset)
+    
     for i in range(len(pathAsset)):
         if pathAsset[i]['asset_type'] == 'native':
             continue
@@ -143,7 +145,10 @@ def pubnet_main(*, public_key = None, asset_send_code, asset_send_issuer, asset_
             )
 
     for i in range(len(pathAsset)):
-        pathAsset[i]=Asset(pathAsset[i]['asset_code'], pathAsset[i]['asset_issuer'])
+        if pathAsset[i]['asset_type'] == 'native':
+            pathAsset[i]=Asset('XLM')
+        else:
+            pathAsset[i]=Asset(pathAsset[i]['asset_code'], pathAsset[i]['asset_issuer'])
 
     pathAsset.insert(0, pubnet_main.asset_send)
     pathAsset.append(asset_receive)

@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from interleave_path_test_rev1 import testnet_main
 from interleave_path_pubnet import pubnet_main
+
 class XDR(BaseModel):
     xdr: str
 
@@ -92,10 +93,10 @@ def fetch_amount_receive(*, asset_send_code: str, asset_send_issuer: Optional[st
 # )
 # print(fetch_amount_receive(
 #         asset_send_code='AQUA', 
-#         asset_send_issuer='GAZDAUCRI3E7APVYGOPLLS6CMMCCXTUZ6ZKWPOS2EMOOGIGOIQWHWYTQ',
-#         asset_receive_code='TERN', 
-#         asset_receive_issuer='GAZDAUCRI3E7APVYGOPLLS6CMMCCXTUZ6ZKWPOS2EMOOGIGOIQWHWYTQ',
-#         amount_send='5',
+#         asset_send_issuer='GBNZILSTVQZ4R7IKQDGHYGY2QXL5QOFJYQMXPKWRRM5PAV7Y4M67AQUA',
+#         asset_receive_code='BTCLN', 
+#         asset_receive_issuer='GDPKQ2TSNJOFSEE7XSUXPWRP27H6GFGLWD7JCHNEYYWQVGFA543EVBVT',
+#         amount_send='10',
 #         is_testnet=False
 #     )
 # )
