@@ -25,7 +25,6 @@ export const reducer = (state, action) => {
     };
   } else if (action.type === "CHANGE_VALUE") {
     const { name, value } = action.payload;
-    console.log(name, value);
     return {
       ...state,
       [name]: value,

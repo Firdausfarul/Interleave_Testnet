@@ -50,13 +50,10 @@ function App() {
         SERVER_URL
       );
       const response = await server.submitTransaction(transactionToSubmit);
-      console.log(response.id);
       dispatch({ type: "SUCCESS_SUBMIT_XDR" });
       const name = "listTransaction";
       const newId = response.id;
-      console.log("list", listTransaction);
       const value = [...listTransaction, newId];
-      console.log(name, value);
       dispatch({ type: "CHANGE_VALUE", payload: { name, value } });
     } catch {
       dispatch({ type: "CANNOT_SUBMIT_XDR" });

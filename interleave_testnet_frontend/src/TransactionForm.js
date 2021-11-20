@@ -162,7 +162,7 @@ const TransactionForm = (props) => {
                           disabled
                           style={{ backgroundColor: "rgb(5, 1, 255, 0.8)" }}
                         >
-                          Submit
+                          Submitting.....
                         </button>
                       ) : (
                         <button type="submit" className="submit-btn">
