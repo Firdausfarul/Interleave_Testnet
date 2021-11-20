@@ -9,7 +9,7 @@ from stellar_sdk import Keypair,Server, TransactionBuilder, Network, Signer, Ass
 import requests
 from stellar_sdk import operation
 
-server = Server("https://horizon-testnet.stellar.org")
+server = Server("https://horizon.stellar.org")
 base_fee = server.fetch_base_fee()*1000
 
 def floor(num, dec_point):
@@ -40,6 +40,7 @@ def liqpool_calc_send(amount_sent):
         amount_received = floor((balance[0]-z), 7)
         #print((balance[0]-amount_received)*(balance[1]+amount_sent))
         return amount_received
+    return 0
 
 #Function for calculating amount received given the amount of asset sent (for orderbook)
 def orderbook_calc_send(amount_sent):
@@ -56,6 +57,7 @@ def orderbook_calc_send(amount_sent):
             amount_received=amount_received+floor((amount_sent/depth[i])*float(testnet_main.ob_details['bids'][i]['amount']), 7)
             amount_sent=0
             return floor(amount_received, 7)
+    return 0
 
 def mix(i, amount_on_liqpool):
     total=liqpool_calc_send(amount_on_liqpool) + orderbook_calc_send(testnet_main.amount_sent[i]-amount_on_liqpool)
@@ -96,7 +98,7 @@ def testnet_main(*, public_key = None, asset_send_code, asset_send_issuer, asset
     if public_key != None:
         acc=Keypair.from_public_key(public_key)
         #fetching account details
-        response = requests.get('https://horizon-testnet.stellar.org/accounts/'+acc.public_key)
+        response = requests.get('https://horizon.stellar.org/accounts/'+acc.public_key)
         acc_details = response.json()
         acc_asset=acc_details['balances']
         #listing asset owned by the account
@@ -127,11 +129,13 @@ def testnet_main(*, public_key = None, asset_send_code, asset_send_issuer, asset
         stellar_account = server.load_account(acc.public_key)
         Transaction1=TransactionBuilder(
             source_account=stellar_account,
-            network_passphrase=Network.TESTNET_NETWORK_PASSPHRASE,
+            network_passphrase=Network.PUBLIC_NETWORK_PASSPHRASE,
             base_fee=base_fee,
         ).add_text_memo('AMOGUS')
 
     pathAsset=path[0]['path']
+    # print(pathAsset)
+
     for i in range(len(pathAsset)):
         if pathAsset[i]['asset_type'] == 'native':
             continue
@@ -143,7 +147,10 @@ def testnet_main(*, public_key = None, asset_send_code, asset_send_issuer, asset
             )
 
     for i in range(len(pathAsset)):
-        pathAsset[i]=Asset(pathAsset[i]['asset_code'], pathAsset[i]['asset_issuer'])
+        if pathAsset[i]['asset_type'] == 'native':
+            pathAsset[i]=Asset('XLM')
+        else:
+            pathAsset[i]=Asset(pathAsset[i]['asset_code'], pathAsset[i]['asset_issuer'])
 
     pathAsset.insert(0, testnet_main.asset_send)
     pathAsset.append(asset_receive)
@@ -157,9 +164,11 @@ def testnet_main(*, public_key = None, asset_send_code, asset_send_issuer, asset
         elif (stellar_sdk.LiquidityPoolAsset.is_valid_lexicographic_order(pathAsset[i], pathAsset[i+1]) == False):
             liqpool = stellar_sdk.LiquidityPoolAsset(pathAsset[i+1], pathAsset[i], stellar_sdk.LIQUIDITY_POOL_FEE_V18)
             pathAsset[i].order = 1
+
         liqpool_id = liqpool.liquidity_pool_id
-        response = requests.get('https://horizon-testnet.stellar.org/liquidity_pools/' + liqpool_id)
+        response = requests.get('https://horizon.stellar.org/liquidity_pools/' + liqpool_id)
         testnet_main.liqpool_details = response.json()
+
         # fetching orderbook details
         testnet_main.ob_details = server.orderbook(pathAsset[i], pathAsset[i+1]).limit(100).call()
 
@@ -224,4 +233,3 @@ def testnet_main(*, public_key = None, asset_send_code, asset_send_issuer, asset
 
     Transaction1=Transaction1.build().to_xdr()
     return Transaction1
-

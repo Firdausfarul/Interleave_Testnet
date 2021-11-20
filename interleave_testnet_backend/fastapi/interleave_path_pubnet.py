@@ -40,6 +40,7 @@ def liqpool_calc_send(amount_sent):
         amount_received = floor((balance[0]-z), 7)
         #print((balance[0]-amount_received)*(balance[1]+amount_sent))
         return amount_received
+    return 0
 
 #Function for calculating amount received given the amount of asset sent (for orderbook)
 def orderbook_calc_send(amount_sent):
@@ -56,6 +57,7 @@ def orderbook_calc_send(amount_sent):
             amount_received=amount_received+floor((amount_sent/depth[i])*float(pubnet_main.ob_details['bids'][i]['amount']), 7)
             amount_sent=0
             return floor(amount_received, 7)
+    return 0
 
 def mix(i, amount_on_liqpool):
     total=liqpool_calc_send(amount_on_liqpool) + orderbook_calc_send(pubnet_main.amount_sent[i]-amount_on_liqpool)
@@ -133,7 +135,7 @@ def pubnet_main(*, public_key = None, asset_send_code, asset_send_issuer, asset_
 
     pathAsset=path[0]['path']
     # print(pathAsset)
-    
+
     for i in range(len(pathAsset)):
         if pathAsset[i]['asset_type'] == 'native':
             continue
@@ -162,9 +164,11 @@ def pubnet_main(*, public_key = None, asset_send_code, asset_send_issuer, asset_
         elif (stellar_sdk.LiquidityPoolAsset.is_valid_lexicographic_order(pathAsset[i], pathAsset[i+1]) == False):
             liqpool = stellar_sdk.LiquidityPoolAsset(pathAsset[i+1], pathAsset[i], stellar_sdk.LIQUIDITY_POOL_FEE_V18)
             pathAsset[i].order = 1
+
         liqpool_id = liqpool.liquidity_pool_id
         response = requests.get('https://horizon.stellar.org/liquidity_pools/' + liqpool_id)
         pubnet_main.liqpool_details = response.json()
+
         # fetching orderbook details
         pubnet_main.ob_details = server.orderbook(pathAsset[i], pathAsset[i+1]).limit(100).call()
 
@@ -200,7 +204,7 @@ def pubnet_main(*, public_key = None, asset_send_code, asset_send_issuer, asset_
             send_amount1[i] = floor(amount_sent_on_orderbook[i], 7)
             dest_min1[i] = floor(amount_receive_ob[i] * slippage, 7)
 
-        if(send_amount1[i]!=0):
+        if(send_amount1[i]!=0 and dest_min1[i]!=0):
             Transaction1.append_path_payment_strict_send_op(
                 destination=acc.public_key,
                 send_code=pathAsset[i].code,
@@ -211,7 +215,7 @@ def pubnet_main(*, public_key = None, asset_send_code, asset_send_issuer, asset_
                 dest_min=str(dest_min1[i]),
                 path=[]
             )
-        if(send_amount2[i]!=0):
+        if(send_amount2[i]!=0 and dest_min2[i]!=0):
             Transaction1.append_path_payment_strict_send_op(
                 destination=acc.public_key,
                 send_code=pathAsset[i].code,
@@ -229,24 +233,3 @@ def pubnet_main(*, public_key = None, asset_send_code, asset_send_issuer, asset_
 
     Transaction1=Transaction1.build().to_xdr()
     return Transaction1
-
-# uncomment to check and debug
-
-# print(fetch_xdr(
-#         public_key='GBSIWZXGNDIRQHTJ4T4G5JMTXLBFASQBRDPX22PESIGJRFZDENYN4END', 
-#         asset_send_code='AQUA', 
-#         asset_send_issuer='GAZDAUCRI3E7APVYGOPLLS6CMMCCXTUZ6ZKWPOS2EMOOGIGOIQWHWYTQ',
-#         asset_receive_code='TERN', 
-#         asset_receive_issuer='GAZDAUCRI3E7APVYGOPLLS6CMMCCXTUZ6ZKWPOS2EMOOGIGOIQWHWYTQ',
-#         amount_send='5',
-#         slippage=0.01,
-#     )
-# )
-# print(fetch_amount_receive(
-#         asset_send_code='AQUA', 
-#         asset_send_issuer='GAZDAUCRI3E7APVYGOPLLS6CMMCCXTUZ6ZKWPOS2EMOOGIGOIQWHWYTQ',
-#         asset_receive_code='TERN', 
-#         asset_receive_issuer='GAZDAUCRI3E7APVYGOPLLS6CMMCCXTUZ6ZKWPOS2EMOOGIGOIQWHWYTQ',
-#         amount_send='5',
-#     )
-# )
