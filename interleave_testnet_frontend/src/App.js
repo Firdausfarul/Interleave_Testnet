@@ -8,18 +8,20 @@ import axios from "axios";
 import {
   isConnected,
   getPublicKey,
+  getNetwork,
   signTransaction,
 } from "@stellar/freighter-api";
 import StellarSdk from "stellar-sdk";
 function App() {
   const [state, dispatch] = useReducer(reducer, defaultState);
   const {
-    publicKey,
+    account,
     assetSend,
     assetReceive,
     amountSend,
     amountReceive,
     slippage,
+    listTransaction,
   } = state;
 
   const fetchUrl = async (url) => {
@@ -28,8 +30,7 @@ function App() {
       const data = response.data;
       return data;
     } catch (e) {
-      console.log(e);
-      dispatch({ type: "ERROR_FETCH" });
+      return e;
     }
   };
   const submitXDR = async (url) => {
@@ -37,15 +38,26 @@ function App() {
       const data = await fetchUrl(url);
       let xdr = data.xdr;
       xdr = await signTransaction(xdr, "TESTNET");
-      const SERVER_URL = "https://horizon-testnet.stellar.org";
+      let SERVER_URL = "";
+      if (account.network === "TESTNET") {
+        SERVER_URL = `https://horizon-testnet.stellar.org`;
+      } else if (account.network === "PUBLIC") {
+        SERVER_URL = `https://horizon.stellar.org`;
+      }
       const server = new StellarSdk.Server(SERVER_URL);
       const transactionToSubmit = StellarSdk.TransactionBuilder.fromXDR(
         xdr,
         SERVER_URL
       );
       const response = await server.submitTransaction(transactionToSubmit);
-      console.log(response);
+      console.log(response.id);
       dispatch({ type: "SUCCESS_SUBMIT_XDR" });
+      const name = "listTransaction";
+      const newId = response.id;
+      console.log("list", listTransaction);
+      const value = [...listTransaction, newId];
+      console.log(name, value);
+      dispatch({ type: "CHANGE_VALUE", payload: { name, value } });
     } catch {
       dispatch({ type: "CANNOT_SUBMIT_XDR" });
     }
@@ -53,28 +65,36 @@ function App() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (
-      publicKey &&
-      assetSend &&
-      assetReceive &&
-      amountSend &&
-      amountReceive &&
-      slippage
-    ) {
+    if (account && assetSend && assetReceive && amountSend && amountReceive) {
+      dispatch({ type: "PROCESSING_TRANSACTION" });
       let url = "https://wy6y1k.deta.dev/fetch_xdr?";
       const params = [];
-      params[0] = `public_key=${publicKey}&`;
-      params[1] = `asset_send_code=${assetSend.code}&`;
-      params[2] = `asset_send_issuer=${assetSend.issuer}&`;
-      params[3] = `asset_receive_code=${assetReceive.code}&`;
-      params[4] = `asset_receive_issuer=${assetReceive.issuer}&`;
-      params[5] = `amount_send=${amountSend}&`;
-      params[6] = `slippage=${slippage}`;
+      params.push(`public_key=${account.publicKey}&`);
+      params.push(`asset_send_code=${assetSend.code}&`);
+      if (assetSend.code !== "XLM") {
+        params.push(`asset_send_issuer=${assetSend.issuer}&`);
+      }
+      params.push(`asset_receive_code=${assetReceive.code}&`);
+      if (assetReceive.code !== "XLM") {
+        params.push(`asset_receive_issuer=${assetReceive.issuer}&`);
+      }
+      params.push(`amount_send=${amountSend}&`);
+      if (!slippage) {
+        params.push(`slippage=0.01&`);
+      } else {
+        params.push(`slippage=${slippage}&`);
+      }
+      if (account.network === "TESTNET") {
+        params.push(`is_testnet=${true}`);
+      } else if (account.network === "PUBLIC") {
+        params.push(`is_testnet=${false}`);
+      }
+
       params.forEach((param) => {
         url += param;
       });
       submitXDR(url);
-    } else if (publicKey) {
+    } else if (account) {
       dispatch({ type: "NO_VALUE" });
     }
   };
@@ -92,51 +112,102 @@ function App() {
       } else {
         value = "";
       }
+    } else if (name === "assetSend" || name === "assetReceive") {
+      const [newBalance, newCode, newIssuer] = value.split("_");
+      if (newCode === "native") {
+        value = { balance: newBalance, code: "native" };
+      } else {
+        value = { balance: newBalance, code: newCode, issuer: newIssuer };
+      }
     }
     dispatch({ type: "CHANGE_VALUE", payload: { name, value } });
   };
   const closeNotification = () => {
     dispatch({ type: "CLOSE_NOTIFICATION" });
   };
-
   const loginFreighter = async () => {
-    let publicKey = "";
-    let error = "";
+    if (isConnected()) {
+      let publicKey = "";
+      let network = "";
+      let url = "";
 
-    try {
-      publicKey = await getPublicKey();
-    } catch (e) {
-      error = e;
-    }
+      try {
+        publicKey = await getPublicKey();
+        network = await getNetwork();
+      } catch (e) {
+        dispatch({ type: "CANNOT_LOGIN" });
+      }
 
-    if (error) {
-      return error;
+      if (network === "TESTNET") {
+        url = `https://horizon-testnet.stellar.org/accounts/${publicKey}`;
+      } else if (network === "PUBLIC") {
+        url = `https://horizon.stellar.org/accounts/${publicKey}`;
+      }
+
+      const balances = await fetchUrl(url).then((data) => data.balances);
+      let listAsset = [];
+      balances.forEach((asset) => {
+        if (asset.asset_type === "native") {
+          listAsset.push({ balance: asset.balance, code: "XLM" });
+        } else if (
+          asset.asset_type !== "liquidity_pool_shares" &&
+          asset.balance !== 0.0000001
+        ) {
+          listAsset.push({
+            balance: asset.balance,
+            code: asset.asset_code,
+            issuer: asset.asset_issuer,
+          });
+        }
+      });
+
+      const name = "account";
+      const value = { publicKey, listAsset, network };
+
+      dispatch({ type: "CHANGE_VALUE", payload: { name, value } });
+    } else {
+      dispatch({ type: "FREIGHTER_NOT_INSTALLED" });
     }
-    const name = "publicKey";
-    const value = publicKey;
+  };
+
+  const setMaxBalance = () => {
+    const name = "amountSend";
+    const value = assetSend.balance;
     dispatch({ type: "CHANGE_VALUE", payload: { name, value } });
   };
 
-  const getAmountReceive = async (url) => {
-    const name = "amountReceive";
-    const value = await fetchUrl(url).then((data) => {
-      return data.amount_receive;
-    });
-    dispatch({
-      type: "CHANGE_VALUE",
-      payload: { name, value },
-    });
-  };
-
   useEffect(() => {
-    if (amountSend && assetSend && assetReceive) {
+    if (account && amountSend && assetSend && assetReceive && amountSend >= 0) {
+      const getAmountReceive = async (url) => {
+        try {
+          const name = "amountReceive";
+          const value = await fetchUrl(url).then((data) => {
+            return data.amount_receive;
+          });
+          dispatch({
+            type: "CHANGE_VALUE",
+            payload: { name, value },
+          });
+        } catch {
+          dispatch({ type: "CANNOT_GET_AMOUNT_RECEIVE" });
+        }
+      };
       let url = "https://wy6y1k.deta.dev/fetch_amount_receive?";
       const params = [];
-      params[0] = `asset_send_code=${assetSend.code}&`;
-      params[1] = `asset_send_issuer=${assetSend.issuer}&`;
-      params[2] = `asset_receive_code=${assetReceive.code}&`;
-      params[3] = `asset_receive_issuer=${assetReceive.issuer}&`;
-      params[4] = `amount_send=${amountSend}`;
+      params.push(`asset_send_code=${assetSend.code}&`);
+      if (assetSend.code !== "XLM") {
+        params.push(`asset_send_issuer=${assetSend.issuer}&`);
+      }
+      params.push(`asset_receive_code=${assetReceive.code}&`);
+      if (assetReceive.code !== "XLM") {
+        params.push(`asset_receive_issuer=${assetReceive.issuer}&`);
+      }
+      params.push(`amount_send=${amountSend}&`);
+      if (account.network === "TESTNET") {
+        params.push(`is_testnet=${true}`);
+      } else if (account.network === "PUBLIC") {
+        params.push(`is_testnet=${false}`);
+      }
       params.forEach((param) => {
         url += param;
       });
@@ -154,19 +225,23 @@ function App() {
         payload: { name, value },
       });
     }
-  }, [amountSend, assetSend, assetReceive]);
+  }, [amountSend, assetSend, assetReceive, account]);
+
   return (
     <React.Fragment>
-      <Navbar publicKey={publicKey} />
-      {/* {isModalOpen && (
-        <Modal closeModal={closeModal} modalContent={modalContent} />
-      )} */}
+      {account ? (
+        <Navbar publicKey={account.publicKey} loginFreighter={loginFreighter} />
+      ) : (
+        <Navbar />
+      )}
+
       <TransactionForm
         state={state}
         handleSubmit={handleSubmit}
         handleChange={handleChange}
         loginFreighter={loginFreighter}
         closeNotification={closeNotification}
+        setMaxBalance={setMaxBalance}
       />
     </React.Fragment>
   );

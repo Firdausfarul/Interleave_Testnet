@@ -10,7 +10,6 @@ const Notification = ({
       closeNotification();
     }, 10000);
   });
-  console.log(notificationColor);
   return (
     <div
       className="notification"

@@ -1,9 +1,7 @@
 import React from "react";
-import { listAsset } from "./listAsset";
 import { Asset } from "./Asset";
+import TransactionSubmitted from "./TransactionSubmitted";
 import Notification from "./Notification";
-
-export const TransactionFormContext = React.createContext();
 
 const TransactionForm = (props) => {
   const {
@@ -12,15 +10,19 @@ const TransactionForm = (props) => {
     handleChange,
     loginFreighter,
     closeNotification,
+    setMaxBalance,
   } = props;
   const {
-    publicKey,
+    account,
     amountSend,
     amountReceive,
+    assetSend,
     slippage,
     isNotificationOpen,
     notificationContent,
     notificationColor,
+    isSubmitting,
+    listTransaction,
   } = state;
   return (
     <section>
@@ -31,13 +33,6 @@ const TransactionForm = (props) => {
               <div className="form-header">
                 <h1>Swap Asset</h1>
               </div>
-              {/* {isConnected() && <h1>user connected</h1>}
-              {publicKey && (
-                <>
-                  <h1>{publicKey}</h1>
-                  <button onClick={logoutFreighter}>logout</button>
-                </>
-              )}*/}
               {isNotificationOpen && (
                 <Notification
                   notificationColor={notificationColor}
@@ -59,8 +54,18 @@ const TransactionForm = (props) => {
                         value={amountSend}
                         onChange={handleChange}
                         placeholder="0.0000000"
+                        min="0"
                         className="form-control"
                       />
+                      {assetSend && (
+                        <span className="form-label balance">
+                          Balances:{" "}
+                          <span className="amount" onClick={setMaxBalance}>
+                            {assetSend.balance}
+                          </span>{" "}
+                          {assetSend.code}
+                        </span>
+                      )}
                     </div>
                   </div>
                   <div className="col-sm-5">
@@ -72,9 +77,16 @@ const TransactionForm = (props) => {
                         className="form-control"
                       >
                         <option value="">Select Asset Type</option>
-                        {listAsset.map((asset) => {
-                          return <Asset key={asset.code} {...asset} />;
-                        })}
+
+                        {account &&
+                          account.listAsset.map((asset) => {
+                            return (
+                              <Asset
+                                key={`${asset.code}_${asset.issuer}`}
+                                {...asset}
+                              />
+                            );
+                          })}
                       </select>
                       <span className="select-arrow"></span>
                     </div>
@@ -107,9 +119,15 @@ const TransactionForm = (props) => {
                         className="form-control"
                       >
                         <option value="">Select Asset Type</option>
-                        {listAsset.map((asset) => {
-                          return <Asset key={asset.code} {...asset} />;
-                        })}
+                        {account &&
+                          account.listAsset.map((asset) => {
+                            return (
+                              <Asset
+                                key={`${asset.code}_${asset.issuer}`}
+                                {...asset}
+                              />
+                            );
+                          })}
                       </select>
                       <span className="select-arrow"></span>
                     </div>
@@ -126,8 +144,8 @@ const TransactionForm = (props) => {
                         name="slippage"
                         value={slippage}
                         onChange={handleChange}
-                        placeholder="value between 0-1 (default 0.1)"
-                        max="1.00"
+                        placeholder="value between 0%-100% (default 0.01%)"
+                        max="100.00"
                         min="0.00"
                         className="form-control"
                       />
@@ -136,13 +154,24 @@ const TransactionForm = (props) => {
                 </div>
                 <div className="row">
                   <div className="form-btn">
-                    {publicKey ? (
-                      <button type="submit" className="submit-btn">
-                        submit
-                      </button>
+                    {account ? (
+                      isSubmitting ? (
+                        <button
+                          type="submit"
+                          className="submit-btn"
+                          disabled
+                          style={{ backgroundColor: "rgb(5, 1, 255, 0.8)" }}
+                        >
+                          Submit
+                        </button>
+                      ) : (
+                        <button type="submit" className="submit-btn">
+                          Submit
+                        </button>
+                      )
                     ) : (
                       <button onClick={loginFreighter} className="submit-btn">
-                        login
+                        Login With Freighter
                       </button>
                     )}
                   </div>
@@ -150,6 +179,28 @@ const TransactionForm = (props) => {
               </form>
             </div>
           </div>
+
+          {listTransaction.length >= 1 && (
+            <div className="row">
+              <div className="list-transaction">
+                <div className="list-transaction-header">
+                  List Transaction Submitted
+                </div>
+                <div className="list-transaction-body">
+                  <ul>
+                    {listTransaction.map((transactionId) => {
+                      return (
+                        <TransactionSubmitted
+                          key={transactionId}
+                          transactionId={transactionId}
+                        />
+                      );
+                    })}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </section>

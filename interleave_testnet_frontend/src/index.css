@@ -30,13 +30,12 @@ header {
   cursor: pointer;
 }
 
-.account {
+.account * {
   padding: 9px 25px;
-  font-family: "Monserrat", sans-serif;
   font-weight: 700;
   font-size: 16px;
   color: #edf0f1;
-  background-color: rgb(5, 1, 255, 1);
+
   border: none;
   border-radius: 50px;
   cursor: pointer;
@@ -44,8 +43,27 @@ header {
   width: fit-content;
 }
 
-.account:hover {
+.account .public-key {
+  -webkit-appearance: button;
+  -moz-appearance: button;
+  appearance: button;
+
+  text-decoration: none;
   background-color: rgb(5, 1, 255, 0.8);
+}
+
+.account .public-key:hover {
+  background-color: rgb(5, 1, 255, 0.6);
+}
+
+.account .refresh {
+  margin-top: 0.2rem;
+  align-items: center;
+  background-color: rgb(255, 94, 1, 0.8);
+}
+
+.account .refresh:hover {
+  background-color: rgb(255, 94, 1, 0.6);
 }
 
 section {
@@ -97,6 +115,7 @@ section .section-center {
   background-color: #181920;
   padding: 30px 20px;
   border-radius: 3px;
+  border-bottom: #edf0f1 solid;
 }
 
 .transaction-form .form-group {
@@ -166,9 +185,23 @@ section .section-center {
   text-transform: uppercase;
 }
 
+.transaction-form .balance {
+  margin-top: 5px;
+}
+
+.transaction-form .balance .amount {
+  color: rgb(5, 1, 255, 1);
+  transition: all 0.3s ease 0s;
+  cursor: pointer;
+}
+
+.transaction-form .balance .amount:hover {
+  color: rgb(5, 1, 255, 0.8);
+}
+
 .transaction-form .submit-btn {
   color: #ffffff;
-  background-color: #0501ff;
+  background-color: rgb(5, 1, 255, 1);
   font-weight: 700;
   height: 50px;
   border: none;
@@ -176,4 +209,33 @@ section .section-center {
   display: block;
   border-radius: 3px;
   text-transform: uppercase;
+}
+
+.list-transaction {
+  max-width: 642px;
+  width: 100%;
+  margin: 2rem auto;
+  background-color: #181920;
+  padding: 30px 20px;
+  border-radius: 3px;
+  border-bottom: #edf0f1 solid;
+}
+
+.list-transaction .list-transaction-header {
+  border-bottom: #edf0f1 solid;
+  font-size: 1.2rem;
+}
+
+.list-transaction .list-transaction-body {
+  margin-top: 0.4rem;
+}
+
+.list-transaction .list-transaction-body ul {
+  list-style: none;
+}
+.list-transaction .list-transaction-body ul li {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 50ch;
 }
