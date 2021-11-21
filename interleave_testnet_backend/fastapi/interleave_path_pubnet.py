@@ -17,6 +17,11 @@ def floor(num, dec_point):
     num_ = math.floor(num*mul)
     return float(num_/mul)
 
+def ceil(num, dec_point):
+    mul = 10**dec_point
+    num_ = math.ceil(num*mul)
+    return float(num_/mul)
+
 #Function for calculating amount received given the amount of asset sent
 def liqpool_calc_send(i, amount_sent):
     balance = [0,0]
@@ -79,13 +84,13 @@ def best_mix_calc_send(i, amount_sent):
             r = m2
 
     f1 = mix(i, floor(l, 7))
-    f2 = mix(i, round(i, 7))
+    f2 = mix(i, ceil(l, 7))
 
     #returning the amount sent that should be sent to liquidity pool
     if f1 > f2:
         return floor(l, 7)
     
-    return round(l, 7)
+    return ceil(l, 7)
 
 def pubnet_main(*, public_key = None, asset_send_code, asset_send_issuer, asset_receive_code,
          asset_receive_issuer, amount_send, slippage = 0, operation_detail):
