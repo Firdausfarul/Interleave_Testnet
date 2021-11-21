@@ -75,8 +75,15 @@ def best_mix_calc_send(i, amount_sent):
             l = m1
         else:
             r = m2
-    l=floor(l, 7)
-    return l #returning the amount sent that should be sent to liquidity pool
+            
+    f1 = mix(i, floor(l, 7))
+    f2 = mix(i, round(i, 7))
+
+    #returning the amount sent that should be sent to liquidity pool
+    if f1 > f2:
+        return floor(l, 7)
+    
+    return round(l, 7)
 
 def testnet_main(*, public_key = None, asset_send_code, asset_send_issuer, asset_receive_code,
          asset_receive_issuer, amount_send, slippage = 0, operation_detail):
