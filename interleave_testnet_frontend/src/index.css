@@ -199,6 +199,17 @@ section .section-center {
   color: rgb(5, 1, 255, 0.8);
 }
 
+.transaction-form .asset {
+  margin-top: 5px;
+  text-decoration: none;
+  color: rgb(5, 1, 255, 1);
+  transition: all 0.3s ease 0s;
+}
+
+.transaction-form .asset:hover {
+  color: rgb(5, 1, 255, 0.8);
+}
+
 .transaction-form .submit-btn {
   color: #ffffff;
   background-color: rgb(5, 1, 255, 1);
@@ -238,4 +249,8 @@ section .section-center {
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 50ch;
+}
+
+.list-transaction .list-transaction-body ul li a {
+  text-decoration: none;
 }

@@ -2,6 +2,7 @@
   "name": "interleave_testnet_frontend",
   "version": "0.1.0",
   "private": true,
+  "homepage": "./",
   "dependencies": {
     "@stellar/freighter-api": "^1.1.2",
     "@testing-library/jest-dom": "^5.15.0",

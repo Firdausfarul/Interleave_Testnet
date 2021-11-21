@@ -227,7 +227,11 @@ function App() {
   return (
     <React.Fragment>
       {account ? (
-        <Navbar publicKey={account.publicKey} loginFreighter={loginFreighter} />
+        <Navbar
+          publicKey={account.publicKey}
+          loginFreighter={loginFreighter}
+          network={account.network.toLowerCase()}
+        />
       ) : (
         <Navbar />
       )}
