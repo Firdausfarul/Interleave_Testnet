@@ -26,7 +26,6 @@ const TransactionForm = (props) => {
     isSubmitting,
     listTransaction,
   } = state;
-  console.log(!_.isEqual(assetSend, assetReceive));
   return (
     <section>
       <div className="section-center">
@@ -99,7 +98,9 @@ const TransactionForm = (props) => {
                                 />
                               );
                             } else {
-                              return <> </>;
+                              return (
+                                <React.Fragment key={"none"}> </React.Fragment>
+                              );
                             }
                           })}
                       </select>
@@ -154,7 +155,9 @@ const TransactionForm = (props) => {
                                 />
                               );
                             } else {
-                              return <> </>;
+                              return (
+                                <React.Fragment key={"none"}> </React.Fragment>
+                              );
                             }
                           })}
                       </select>
@@ -221,7 +224,7 @@ const TransactionForm = (props) => {
                       return (
                         <TransactionSubmitted
                           key={transaction.id}
-                          transactionId={transaction}
+                          transaction={transaction}
                         />
                       );
                     })}

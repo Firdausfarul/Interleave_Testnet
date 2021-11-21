@@ -19,7 +19,6 @@ function App() {
     assetSend,
     assetReceive,
     amountSend,
-    amountReceive,
     slippage,
     listTransaction,
   } = state;
@@ -43,7 +42,6 @@ function App() {
       } else if (account.network === "PUBLIC") {
         SERVER_URL = `https://horizon.stellar.org`;
       }
-      console.log("xdr", xdr);
       const server = new StellarSdk.Server(SERVER_URL);
       const transactionToSubmit = StellarSdk.TransactionBuilder.fromXDR(
         xdr,
@@ -65,7 +63,7 @@ function App() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (account && assetSend && assetReceive && amountSend && amountReceive) {
+    if (account && assetSend && assetReceive && amountSend) {
       dispatch({ type: "PROCESSING_TRANSACTION" });
       let url = "https://ph7wlb.deta.dev/fetch_xdr?";
       const params = [];
