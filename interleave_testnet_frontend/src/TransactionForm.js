@@ -17,6 +17,7 @@ const TransactionForm = (props) => {
     amountSend,
     amountReceive,
     assetSend,
+    assetReceive,
     slippage,
     isNotificationOpen,
     notificationContent,
@@ -60,7 +61,11 @@ const TransactionForm = (props) => {
                       {assetSend && (
                         <span className="form-label balance">
                           Balances:{" "}
-                          <span className="amount" onClick={setMaxBalance}>
+                          <span
+                            className="amount"
+                            onClick={setMaxBalance}
+                            name="balance-send"
+                          >
                             {assetSend.balance}
                           </span>{" "}
                           {assetSend.code}
@@ -108,6 +113,13 @@ const TransactionForm = (props) => {
                         className="form-control"
                         readOnly
                       />
+                      {assetReceive && (
+                        <span className="form-label balance">
+                          Balances:{" "}
+                          <span className="amount">{assetReceive.balance}</span>{" "}
+                          {assetReceive.code}
+                        </span>
+                      )}
                     </div>
                   </div>
                   <div className="col-sm-5">
@@ -188,11 +200,11 @@ const TransactionForm = (props) => {
                 </div>
                 <div className="list-transaction-body">
                   <ul>
-                    {listTransaction.map((transactionId) => {
+                    {listTransaction.map((transaction) => {
                       return (
                         <TransactionSubmitted
-                          key={transactionId}
-                          transactionId={transactionId}
+                          key={transaction.id}
+                          transactionId={transaction}
                         />
                       );
                     })}

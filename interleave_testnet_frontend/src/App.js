@@ -37,13 +37,14 @@ function App() {
     try {
       const data = await fetchUrl(url);
       let xdr = data.xdr;
-      xdr = await signTransaction(xdr, "TESTNET");
+      xdr = await signTransaction(xdr, account.network);
       let SERVER_URL = "";
       if (account.network === "TESTNET") {
         SERVER_URL = `https://horizon-testnet.stellar.org`;
       } else if (account.network === "PUBLIC") {
         SERVER_URL = `https://horizon.stellar.org`;
       }
+      console.log("xdr", xdr);
       const server = new StellarSdk.Server(SERVER_URL);
       const transactionToSubmit = StellarSdk.TransactionBuilder.fromXDR(
         xdr,
@@ -53,7 +54,10 @@ function App() {
       dispatch({ type: "SUCCESS_SUBMIT_XDR" });
       const name = "listTransaction";
       const newId = response.id;
-      const value = [...listTransaction, newId];
+      const value = [
+        ...listTransaction,
+        { network: account.network.toLowerCase(), id: newId },
+      ];
       dispatch({ type: "CHANGE_VALUE", payload: { name, value } });
     } catch {
       dispatch({ type: "CANNOT_SUBMIT_XDR" });
@@ -64,7 +68,7 @@ function App() {
     e.preventDefault();
     if (account && assetSend && assetReceive && amountSend && amountReceive) {
       dispatch({ type: "PROCESSING_TRANSACTION" });
-      let url = "https://wy6y1k.deta.dev/fetch_xdr?";
+      let url = "https://ph7wlb.deta.dev/fetch_xdr?";
       const params = [];
       params.push(`public_key=${account.publicKey}&`);
       params.push(`asset_send_code=${assetSend.code}&`);
@@ -148,7 +152,7 @@ function App() {
           listAsset.push({ balance: asset.balance, code: "XLM" });
         } else if (
           asset.asset_type !== "liquidity_pool_shares" &&
-          asset.balance !== 0.0000001
+          asset.balance !== "0.0000001"
         ) {
           listAsset.push({
             balance: asset.balance,
@@ -189,7 +193,7 @@ function App() {
           dispatch({ type: "CANNOT_GET_AMOUNT_RECEIVE" });
         }
       };
-      let url = "https://wy6y1k.deta.dev/fetch_amount_receive?";
+      let url = "https://ph7wlb.deta.dev/fetch_amount_receive?";
       const params = [];
       params.push(`asset_send_code=${assetSend.code}&`);
       if (assetSend.code !== "XLM") {
