@@ -23,7 +23,6 @@ function App() {
     slippage,
     listTransaction,
   } = state;
-
   const fetchUrl = async (url) => {
     try {
       const response = await axios.get(url);
@@ -114,12 +113,8 @@ function App() {
         value = "";
       }
     } else if (name === "assetSend" || name === "assetReceive") {
-      const [newBalance, newCode, newIssuer] = value.split("_");
-      if (newCode === "native") {
-        value = { balance: newBalance, code: "native" };
-      } else {
-        value = { balance: newBalance, code: newCode, issuer: newIssuer };
-      }
+      const [balance, code, issuer] = value.split("_");
+      value = { balance, code, issuer };
     }
     dispatch({ type: "CHANGE_VALUE", payload: { name, value } });
   };
@@ -135,37 +130,40 @@ function App() {
       try {
         publicKey = await getPublicKey();
         network = await getNetwork();
+        if (network === "TESTNET") {
+          url = `https://horizon-testnet.stellar.org/accounts/${publicKey}`;
+        } else if (network === "PUBLIC") {
+          url = `https://horizon.stellar.org/accounts/${publicKey}`;
+        }
+
+        const balances = await fetchUrl(url).then((data) => data.balances);
+        let listAsset = [];
+        balances.forEach((asset) => {
+          if (asset.asset_type === "native") {
+            listAsset.push({
+              balance: asset.balance,
+              code: "XLM",
+              issuer: "None",
+            });
+          } else if (
+            asset.asset_type !== "liquidity_pool_shares" &&
+            asset.balance !== "0.0000001"
+          ) {
+            listAsset.push({
+              balance: asset.balance,
+              code: asset.asset_code,
+              issuer: asset.asset_issuer,
+            });
+          }
+        });
+
+        const name = "account";
+        const value = { publicKey, listAsset, network };
+
+        dispatch({ type: "CHANGE_VALUE", payload: { name, value } });
       } catch (e) {
         dispatch({ type: "CANNOT_LOGIN" });
       }
-
-      if (network === "TESTNET") {
-        url = `https://horizon-testnet.stellar.org/accounts/${publicKey}`;
-      } else if (network === "PUBLIC") {
-        url = `https://horizon.stellar.org/accounts/${publicKey}`;
-      }
-
-      const balances = await fetchUrl(url).then((data) => data.balances);
-      let listAsset = [];
-      balances.forEach((asset) => {
-        if (asset.asset_type === "native") {
-          listAsset.push({ balance: asset.balance, code: "XLM" });
-        } else if (
-          asset.asset_type !== "liquidity_pool_shares" &&
-          asset.balance !== "0.0000001"
-        ) {
-          listAsset.push({
-            balance: asset.balance,
-            code: asset.asset_code,
-            issuer: asset.asset_issuer,
-          });
-        }
-      });
-
-      const name = "account";
-      const value = { publicKey, listAsset, network };
-
-      dispatch({ type: "CHANGE_VALUE", payload: { name, value } });
     } else {
       dispatch({ type: "FREIGHTER_NOT_INSTALLED" });
     }

@@ -1,4 +1,5 @@
 import React from "react";
+import _ from "lodash";
 import { Asset } from "./Asset";
 import TransactionSubmitted from "./TransactionSubmitted";
 import Notification from "./Notification";
@@ -25,6 +26,7 @@ const TransactionForm = (props) => {
     isSubmitting,
     listTransaction,
   } = state;
+  console.log(!_.isEqual(assetSend, assetReceive));
   return (
     <section>
       <div className="section-center">
@@ -85,12 +87,20 @@ const TransactionForm = (props) => {
 
                         {account &&
                           account.listAsset.map((asset) => {
-                            return (
-                              <Asset
-                                key={`${asset.code}_${asset.issuer}`}
-                                {...asset}
-                              />
-                            );
+                            if (
+                              (assetReceive &&
+                                !_.isEqual(asset, assetReceive)) ||
+                              !assetReceive
+                            ) {
+                              return (
+                                <Asset
+                                  key={`${asset.code}_${asset.issuer}`}
+                                  {...asset}
+                                />
+                              );
+                            } else {
+                              return <> </>;
+                            }
                           })}
                       </select>
                       <span className="select-arrow"></span>
@@ -133,12 +143,19 @@ const TransactionForm = (props) => {
                         <option value="">Select Asset Type</option>
                         {account &&
                           account.listAsset.map((asset) => {
-                            return (
-                              <Asset
-                                key={`${asset.code}_${asset.issuer}`}
-                                {...asset}
-                              />
-                            );
+                            if (
+                              (assetSend && !_.isEqual(assetSend, asset)) ||
+                              !assetSend
+                            ) {
+                              return (
+                                <Asset
+                                  key={`${asset.code}_${asset.issuer}`}
+                                  {...asset}
+                                />
+                              );
+                            } else {
+                              return <> </>;
+                            }
                           })}
                       </select>
                       <span className="select-arrow"></span>
