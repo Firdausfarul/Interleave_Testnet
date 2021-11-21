@@ -1,11 +1,13 @@
 export const defaultState = {
-  publicKey: null,
+  account: null,
   assetSend: null,
   assetReceive: null,
   amountSend: "",
   amountReceive: "",
   slippage: "",
-  xdr: null,
-  isModalOpen: false,
-  modalContent: null,
+  isNotificationOpen: false,
+  notificationContent: null,
+  notificationColor: null,
+  isSubmitting: false,
+  listTransaction: [],
 };
