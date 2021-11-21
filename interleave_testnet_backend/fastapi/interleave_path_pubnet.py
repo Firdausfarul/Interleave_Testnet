@@ -18,7 +18,7 @@ def floor(num, dec_point):
     return float(num_/mul)
 
 #Function for calculating amount received given the amount of asset sent
-def liqpool_calc_send(amount_sent):
+def liqpool_calc_send(i, amount_sent):
     balance = [0,0]
     amount_sent=floor(amount_sent*0.997, 7)
     if(pubnet_main.asset_send.type != 'native'):
@@ -28,13 +28,13 @@ def liqpool_calc_send(amount_sent):
     balance[0]=float(pubnet_main.liqpool_details['reserves'][0]['amount']) #balanceA
     balance[1]=float(pubnet_main.liqpool_details['reserves'][1]['amount']) #balanceB
     pool_product=balance[0]*balance[1]
-    if(pubnet_main.asset_send.order == 0):
+    if(pubnet_main.pathAsset[i].order == 0):
         balance_after=balance[0]+amount_sent
         z=pool_product/balance_after
         amount_received=floor((balance[1]-z), 7)
         #print((balance[1] - amount_received) * (balance[0] + amount_sent))
         return amount_received
-    elif(pubnet_main.asset_send.order == 1):
+    elif(pubnet_main.pathAsset[i].order == 1):
         balance_after=balance[1]+amount_sent
         z=pool_product/balance_after
         amount_received = floor((balance[0]-z), 7)
@@ -60,7 +60,7 @@ def orderbook_calc_send(amount_sent):
     return 0
 
 def mix(i, amount_on_liqpool):
-    total=liqpool_calc_send(amount_on_liqpool) + orderbook_calc_send(pubnet_main.amount_sent[i]-amount_on_liqpool)
+    total=liqpool_calc_send(i, amount_on_liqpool) + orderbook_calc_send(pubnet_main.amount_sent[i]-amount_on_liqpool)
     return floor(total, 7)
 
 #Finding the best combination of LP:Orderbook using ternary search
@@ -133,44 +133,44 @@ def pubnet_main(*, public_key = None, asset_send_code, asset_send_issuer, asset_
             base_fee=base_fee,
         ).add_text_memo('AMOGUS')
 
-    pathAsset=path[0]['path']
-    # print(pathAsset)
+    pubnet_main.pathAsset=path[0]['path']
+    # print(pubnet_main.pathAsset)
 
-    for i in range(len(pathAsset)):
-        if pathAsset[i]['asset_type'] == 'native':
+    for i in range(len(pubnet_main.pathAsset)):
+        if pubnet_main.pathAsset[i]['asset_type'] == 'native':
             continue
 
         if operation_detail == "fetch_xdr":
             Transaction1.append_change_trust_op(
-                asset_code=pathAsset[i]['asset_code'],
-                asset_issuer=pathAsset[i]['asset_issuer']
+                asset_code=pubnet_main.pathAsset[i]['asset_code'],
+                asset_issuer=pubnet_main.pathAsset[i]['asset_issuer']
             )
 
-    for i in range(len(pathAsset)):
-        if pathAsset[i]['asset_type'] == 'native':
-            pathAsset[i]=Asset('XLM')
+    for i in range(len(pubnet_main.pathAsset)):
+        if pubnet_main.pathAsset[i]['asset_type'] == 'native':
+            pubnet_main.pathAsset[i]=Asset('XLM')
         else:
-            pathAsset[i]=Asset(pathAsset[i]['asset_code'], pathAsset[i]['asset_issuer'])
+            pubnet_main.pathAsset[i]=Asset(pubnet_main.pathAsset[i]['asset_code'], pubnet_main.pathAsset[i]['asset_issuer'])
 
-    pathAsset.insert(0, pubnet_main.asset_send)
-    pathAsset.append(asset_receive)
+    pubnet_main.pathAsset.insert(0, pubnet_main.asset_send)
+    pubnet_main.pathAsset.append(asset_receive)
 
     total_receive = 0
 
-    for i in range(len(pathAsset)-1):
-        if (stellar_sdk.LiquidityPoolAsset.is_valid_lexicographic_order(pathAsset[i], pathAsset[i+1])):
-            liqpool = stellar_sdk.LiquidityPoolAsset(pathAsset[i], pathAsset[i+1], stellar_sdk.LIQUIDITY_POOL_FEE_V18)
-            pathAsset[i].order = 0
-        elif (stellar_sdk.LiquidityPoolAsset.is_valid_lexicographic_order(pathAsset[i], pathAsset[i+1]) == False):
-            liqpool = stellar_sdk.LiquidityPoolAsset(pathAsset[i+1], pathAsset[i], stellar_sdk.LIQUIDITY_POOL_FEE_V18)
-            pathAsset[i].order = 1
+    for i in range(len(pubnet_main.pathAsset)-1):
+        if (stellar_sdk.LiquidityPoolAsset.is_valid_lexicographic_order(pubnet_main.pathAsset[i], pubnet_main.pathAsset[i+1])):
+            liqpool = stellar_sdk.LiquidityPoolAsset(pubnet_main.pathAsset[i], pubnet_main.pathAsset[i+1], stellar_sdk.LIQUIDITY_POOL_FEE_V18)
+            pubnet_main.pathAsset[i].order = 0
+        elif (stellar_sdk.LiquidityPoolAsset.is_valid_lexicographic_order(pubnet_main.pathAsset[i], pubnet_main.pathAsset[i+1]) == False):
+            liqpool = stellar_sdk.LiquidityPoolAsset(pubnet_main.pathAsset[i+1], pubnet_main.pathAsset[i], stellar_sdk.LIQUIDITY_POOL_FEE_V18)
+            pubnet_main.pathAsset[i].order = 1
 
         liqpool_id = liqpool.liquidity_pool_id
         response = requests.get('https://horizon.stellar.org/liquidity_pools/' + liqpool_id)
         pubnet_main.liqpool_details = response.json()
 
         # fetching orderbook details
-        pubnet_main.ob_details = server.orderbook(pathAsset[i], pathAsset[i+1]).limit(100).call()
+        pubnet_main.ob_details = server.orderbook(pubnet_main.pathAsset[i], pubnet_main.pathAsset[i+1]).limit(100).call()
 
         amount_sent_on_liqpool[i] = best_mix_calc_send(i, pubnet_main.amount_sent[i])
         amount_sent_on_orderbook[i] = pubnet_main.amount_sent[i] - amount_sent_on_liqpool[i]
@@ -182,13 +182,13 @@ def pubnet_main(*, public_key = None, asset_send_code, asset_send_issuer, asset_
             continue
 
         # determining the operation order
-        path_amount_liqpool = max(liqpool_calc_send(amount_sent_on_liqpool[i]), orderbook_calc_send(amount_sent_on_liqpool[i]))
-        path_amount_orderbook = max(liqpool_calc_send(amount_sent_on_orderbook[i]), orderbook_calc_send(amount_sent_on_orderbook[i]))
+        path_amount_liqpool = max(liqpool_calc_send(i, amount_sent_on_liqpool[i]), orderbook_calc_send(amount_sent_on_liqpool[i]))
+        path_amount_orderbook = max(liqpool_calc_send(i, amount_sent_on_orderbook[i]), orderbook_calc_send(amount_sent_on_orderbook[i]))
 
         performance = received_interleave[i] - path_amount_liqpool
         # print(performance)
 
-        amount_receive_lp[i] = liqpool_calc_send(amount_sent_on_liqpool[i])
+        amount_receive_lp[i] = liqpool_calc_send(i, amount_sent_on_liqpool[i])
         amount_receive_ob[i] = orderbook_calc_send(amount_sent_on_orderbook[i])
         slippage = float(slippage) / 100
         slippage = floor(1 - slippage, 4)
@@ -204,25 +204,26 @@ def pubnet_main(*, public_key = None, asset_send_code, asset_send_issuer, asset_
             send_amount1[i] = floor(amount_sent_on_orderbook[i], 7)
             dest_min1[i] = floor(amount_receive_ob[i] * slippage, 7)
 
+        # print(f"Loop ke-{i}:\ndestmin1: {dest_min1}, destmin2: {dest_min2}")
         if(send_amount1[i]!=0 and dest_min1[i]!=0):
             Transaction1.append_path_payment_strict_send_op(
                 destination=acc.public_key,
-                send_code=pathAsset[i].code,
-                send_issuer=pathAsset[i].issuer,
+                send_code=pubnet_main.pathAsset[i].code,
+                send_issuer=pubnet_main.pathAsset[i].issuer,
                 send_amount=str(send_amount1[i]),
-                dest_code=pathAsset[i+1].code,
-                dest_issuer=pathAsset[i+1].issuer,
+                dest_code=pubnet_main.pathAsset[i+1].code,
+                dest_issuer=pubnet_main.pathAsset[i+1].issuer,
                 dest_min=str(dest_min1[i]),
                 path=[]
             )
         if(send_amount2[i]!=0 and dest_min2[i]!=0):
             Transaction1.append_path_payment_strict_send_op(
                 destination=acc.public_key,
-                send_code=pathAsset[i].code,
-                send_issuer=pathAsset[i].issuer,
+                send_code=pubnet_main.pathAsset[i].code,
+                send_issuer=pubnet_main.pathAsset[i].issuer,
                 send_amount=str(send_amount2[i]),
-                dest_code=pathAsset[i+1].code,
-                dest_issuer=pathAsset[i+1].issuer,
+                dest_code=pubnet_main.pathAsset[i+1].code,
+                dest_issuer=pubnet_main.pathAsset[i+1].issuer,
                 dest_min=str(dest_min2[i]),
                 path=[]
             )

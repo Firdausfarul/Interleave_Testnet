@@ -81,22 +81,22 @@ def fetch_amount_receive(*, asset_send_code: str, asset_send_issuer: Optional[st
 # uncomment to check and debug
 
 # print(fetch_xdr(
-#         public_key='GBSIWZXGNDIRQHTJ4T4G5JMTXLBFASQBRDPX22PESIGJRFZDENYN4END', 
-#         asset_send_code='AQUA', 
+#         public_key='', 
+#         asset_send_code='YBX', 
 #         asset_send_issuer='GAZDAUCRI3E7APVYGOPLLS6CMMCCXTUZ6ZKWPOS2EMOOGIGOIQWHWYTQ',
-#         asset_receive_code='TERN', 
+#         asset_receive_code='USDC', 
 #         asset_receive_issuer='GAZDAUCRI3E7APVYGOPLLS6CMMCCXTUZ6ZKWPOS2EMOOGIGOIQWHWYTQ',
-#         amount_send='5',
+#         amount_send='10000',
 #         slippage=0.01,
-#         is_testnet=False
+#         is_testnet=True
 #     )
 # )
 # print(fetch_amount_receive(
-#         asset_send_code='AQUA', 
-#         asset_send_issuer='GBNZILSTVQZ4R7IKQDGHYGY2QXL5QOFJYQMXPKWRRM5PAV7Y4M67AQUA',
-#         asset_receive_code='BTCLN', 
-#         asset_receive_issuer='GDPKQ2TSNJOFSEE7XSUXPWRP27H6GFGLWD7JCHNEYYWQVGFA543EVBVT',
-#         amount_send='10',
-#         is_testnet=False
+#         asset_send_code='YBX', 
+#         asset_send_issuer='GAZDAUCRI3E7APVYGOPLLS6CMMCCXTUZ6ZKWPOS2EMOOGIGOIQWHWYTQ',
+#         asset_receive_code='USDC', 
+#         asset_receive_issuer='GAZDAUCRI3E7APVYGOPLLS6CMMCCXTUZ6ZKWPOS2EMOOGIGOIQWHWYTQ',
+#         amount_send='10000',
+#         is_testnet=True
 #     )
 # )
