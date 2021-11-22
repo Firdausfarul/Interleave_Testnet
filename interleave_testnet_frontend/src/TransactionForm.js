@@ -82,7 +82,7 @@ const TransactionForm = (props) => {
                         onChange={handleChange}
                         className="form-control"
                       >
-                        <option value="">Select Asset Type</option>
+                        <option value="">Select Asset</option>
 
                         {account &&
                           account.listAsset.map((asset) => {
@@ -169,7 +169,7 @@ const TransactionForm = (props) => {
                         onChange={handleChange}
                         className="form-control"
                       >
-                        <option value="">Select Asset Type</option>
+                        <option value="">Select Asset</option>
                         {account &&
                           account.listAsset.map((asset) => {
                             if (
