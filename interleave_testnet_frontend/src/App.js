@@ -111,8 +111,12 @@ function App() {
         value = "";
       }
     } else if (name === "assetSend" || name === "assetReceive") {
-      const [balance, code, issuer] = value.split("_");
-      value = { balance, code, issuer };
+      if (value) {
+        const [balance, code, issuer] = value.split("_");
+        value = { balance, code, issuer };
+      } else {
+        value = null;
+      }
     }
     dispatch({ type: "CHANGE_VALUE", payload: { name, value } });
   };

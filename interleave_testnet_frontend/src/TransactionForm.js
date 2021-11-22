@@ -105,20 +105,33 @@ const TransactionForm = (props) => {
                           })}
                       </select>
                       <span className="select-arrow"></span>
-                      {assetSend && (
-                        <a
-                          href={`https://stellar.expert/explorer/${account.network.toLowerCase()}/asset/${
-                            assetSend.code
-                          }-${assetSend.issuer}`}
-                          rel="noopener noreferrer"
-                          target="_blank"
-                          className="form-label asset"
-                        >
-                          {`${assetSend.issuer.slice(
-                            0,
-                            4
-                          )}....${assetSend.issuer.slice(52, 56)}`}
-                        </a>
+                      {assetSend ? (
+                        assetSend.issuer === "None" ? (
+                          <a
+                            href={`https://stellar.expert/explorer/${account.network.toLowerCase()}/asset/XLM`}
+                            rel="noopener noreferrer"
+                            target="_blank"
+                            className="form-label asset"
+                          >
+                            Native
+                          </a>
+                        ) : (
+                          <a
+                            href={`https://stellar.expert/explorer/${account.network.toLowerCase()}/asset/${
+                              assetSend.code
+                            }-${assetSend.issuer}`}
+                            rel="noopener noreferrer"
+                            target="_blank"
+                            className="form-label asset"
+                          >
+                            {`${assetSend.issuer.slice(
+                              0,
+                              4
+                            )}....${assetSend.issuer.slice(52, 56)}`}
+                          </a>
+                        )
+                      ) : (
+                        <> </>
                       )}
                     </div>
                   </div>
@@ -177,8 +190,8 @@ const TransactionForm = (props) => {
                           })}
                       </select>
                       <span className="select-arrow"></span>
-                      {assetReceive &&
-                        (assetReceive.issuer === "None" ? (
+                      {assetReceive ? (
+                        assetReceive.issuer === "None" ? (
                           <a
                             href={`https://stellar.expert/explorer/${account.network.toLowerCase()}/asset/XLM`}
                             rel="noopener noreferrer"
@@ -201,7 +214,10 @@ const TransactionForm = (props) => {
                               4
                             )}....${assetReceive.issuer.slice(52, 56)}`}
                           </a>
-                        ))}
+                        )
+                      ) : (
+                        <> </>
+                      )}
                     </div>
                   </div>
                 </div>
