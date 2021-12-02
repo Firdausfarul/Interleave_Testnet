@@ -175,6 +175,15 @@ class Pathing:
         self.amount_sent = 0
         self.amount_received = 0
 
+
+class TxInf:
+    def __init__(self, amount_sent, path, amount_received):
+        path.path.pop(len(path.path) - 1)
+        path.path.pop(0)
+        self.path = path.path
+        self.amount_sent = amount_sent
+        self.amount_received = amount_received
+
 asset_sent=Asset('LSP', 'GAB7STHVD5BDH3EEYXPI3OM7PCS4V443PYB5FNT6CFGJVPDLMKDM24WK')
 asset_received=Asset('XLM')
 source_asset=asset_sent
@@ -186,6 +195,7 @@ slippage=slippage/100
 acc='GAB7STHVD5BDH3EEYXPI3OM7PCS4V443PYB5FNT6CFGJVPDLMKDM24WK'
 loops=10
 
+TxInfo = []
 
 #ToDo : Handle Case if not divisible by 100
 loop_amount=round(amount_sent/loops, 7)
@@ -253,6 +263,11 @@ for h in range(loops):
     temp_result=path_send(path=path[0], amount_sent=loop_amount, type='execute')
     path[0].amount_sent= path[0].amount_sent + temp_result[0]
     path[0].amount_received= path[0].amount_received + temp_result[1]
+    gx=temp_result[0]
+    xg=temp_result[1]
+    patemp=copy.deepcopy(path[0])
+    Tx_temp=TxInf(path=patemp, amount_sent=gx, amount_received=xg)
+    TxInfo.append(Tx_temp)
     print(h, temp_result[1])
     for g in range(len(path)):
         path[g].price=path_send(path=path[g], amount_sent=loop_amount, type='calc')
@@ -274,20 +289,20 @@ Transaction=TransactionBuilder(
     network_passphrase=Network.PUBLIC_NETWORK_PASSPHRASE,
     base_fee=100000
 )
-for r in range(len(path)):
-    if(path[r].amount_sent==0):
-        break
-    path[r].path.pop(len(path[r].path)-1)
-    path[r].path.pop(0)
+for r in range(len(TxInfo)):
+    #if(path[r].amount_sent==0):
+     #   break
+    #path[r].path.pop(len(path[r].path)-1)
+    #path[r].path.pop(0)
     Transaction.append_path_payment_strict_send_op(
         send_code=source_asset.code,
         send_issuer=source_asset.issuer,
-        send_amount=str(rount(path[r].amount_sent)),
+        send_amount=str(rount(TxInfo[r].amount_sent)),
         destination=acc,
         dest_code=destination_asset.code,
         dest_issuer=destination_asset.issuer,
-        dest_min=str(rount(path[r].amount_received*slippage)),
-        path=path[r].path
+        dest_min=str(rount(TxInfo[r].amount_received*slippage)),
+        path=TxInfo[r].path
     )
 Transaction=Transaction.build().to_xdr()
 print(Transaction)
