@@ -24,6 +24,9 @@ def ceil(num, dec_point):
 
 #Function for calculating amount received given the amount of asset sent
 def liqpool_calc_send(i, amount_sent):
+    if not testnet_main.liqpool_exist:
+        return 0
+
     balance = [0,0]
     amount_sent=floor(amount_sent*0.997, 7)
     if(testnet_main.asset_send.type != 'native'):
@@ -45,13 +48,16 @@ def liqpool_calc_send(i, amount_sent):
         amount_received = floor((balance[0]-z), 7)
         #print((balance[0]-amount_received)*(balance[1]+amount_sent))
         return amount_received
+    return 0
 
 #Function for calculating amount received given the amount of asset sent (for orderbook)
 def orderbook_calc_send(amount_sent):
     depth=[]
     amount_received=0
     for i in range(len(testnet_main.ob_details['bids'])):
-        depth.append(floor(1/float(testnet_main.ob_details['bids'][i]['price'])*float(testnet_main.ob_details['bids'][i]['amount']), 7))
+        _price = float(testnet_main.ob_details['bids'][i]['price_r']['n'])
+        _price /= float(testnet_main.ob_details['bids'][i]['price_r']['d'])
+        depth.append(floor(float(testnet_main.ob_details['bids'][i]['amount'])/_price, 7))
         if(amount_sent>=depth[i]):
             amount_received=amount_received+float(testnet_main.ob_details['bids'][i]['amount'])
             amount_sent=amount_sent-depth[i]
@@ -61,6 +67,7 @@ def orderbook_calc_send(amount_sent):
             amount_received=amount_received+floor((amount_sent/depth[i])*float(testnet_main.ob_details['bids'][i]['amount']), 7)
             amount_sent=0
             return floor(amount_received, 7)
+    return 0
 
 def mix(i, amount_on_liqpool):
     total=liqpool_calc_send(i, amount_on_liqpool) + orderbook_calc_send(testnet_main.amount_sent[i]-amount_on_liqpool)
@@ -71,7 +78,7 @@ def best_mix_calc_send(i, amount_sent):
     accuracy = 0.0000001 #decimal accuracy
     l=0
     r=amount_sent
-    while(r-l > accuracy):
+    for _ in range(200):
         m1 = l + (r-l) / 3
         m2= r - (r-l) / 3
         f1= mix(i, m1)
@@ -84,11 +91,9 @@ def best_mix_calc_send(i, amount_sent):
     f1 = mix(i, floor(l, 7))
     f2 = mix(i, ceil(l, 7))
 
-    #returning the amount sent that should be sent to liquidity pool
-    if f1 > f2:
-        return floor(l, 7)
-    
-    return ceil(l, 7)
+    if f1 < f2:
+        return ceil(l, 7)
+    return floor(l, 7)
 
 def testnet_main(*, public_key = None, asset_send_code, asset_send_issuer, asset_receive_code,
          asset_receive_issuer, amount_send, slippage = 0, operation_detail):
@@ -110,6 +115,8 @@ def testnet_main(*, public_key = None, asset_send_code, asset_send_issuer, asset
         #fetching account details
         response = requests.get('https://horizon-testnet.stellar.org/accounts/'+acc.public_key)
         acc_details = response.json()
+        # print(acc.public_key)
+        # print(acc_details)
         acc_asset=acc_details['balances']
         #listing asset owned by the account
         for i in range(len(acc_details['balances'])):
@@ -117,8 +124,9 @@ def testnet_main(*, public_key = None, asset_send_code, asset_send_issuer, asset
                 asset.append(Asset(acc_asset[i]['asset_code'], acc_asset[i]['asset_issuer']))
             elif(acc_asset[i]['asset_type'] == 'native') :
                 asset.append(Asset('XLM'))
-    
+
     amount_send=floor(float(amount_send), 7)
+
     testnet_main.amount_sent.append(amount_send)
 
     # setting the asset send and asset receive
@@ -129,7 +137,7 @@ def testnet_main(*, public_key = None, asset_send_code, asset_send_issuer, asset
 
     pathresp = server.strict_send_paths(
         source_asset=testnet_main.asset_send,
-        source_amount=str(testnet_main.amount_sent[0]),
+        source_amount=str(f'{testnet_main.amount_sent[0]:.7f}'),
         destination=destine
     ).call()
     path=pathresp['_embedded']['records']
@@ -141,14 +149,18 @@ def testnet_main(*, public_key = None, asset_send_code, asset_send_issuer, asset
             source_account=stellar_account,
             network_passphrase=Network.TESTNET_NETWORK_PASSPHRASE,
             base_fee=base_fee,
-        ).add_text_memo('AMOGUS')
+        ).add_text_memo('https://neptunus.io')
 
     testnet_main.pathAsset=path[0]['path']
+    # print(testnet_main.pathAsset)
+    print(Asset('LSP', 'GAB7STHVD5BDH3EEYXPI3OM7PCS4V443PYB5FNT6CFGJVPDLMKDM24WK') in asset)
     for i in range(len(testnet_main.pathAsset)):
         if testnet_main.pathAsset[i]['asset_type'] == 'native':
             continue
 
         if operation_detail == "fetch_xdr":
+            if Asset(testnet_main.pathAsset[i]['asset_code'], testnet_main.pathAsset[i]['asset_issuer']) in asset:
+                continue
             Transaction1.append_change_trust_op(
                 asset_code=testnet_main.pathAsset[i]['asset_code'],
                 asset_issuer=testnet_main.pathAsset[i]['asset_issuer']
@@ -164,7 +176,9 @@ def testnet_main(*, public_key = None, asset_send_code, asset_send_issuer, asset
     testnet_main.pathAsset.append(asset_receive)
 
     total_receive = 0
-    print(f"length: {len(testnet_main.pathAsset)}")
+    slippage = float(slippage) / 100
+    slippage = floor(1 - slippage, 4)
+
     for i in range(len(testnet_main.pathAsset)-1):
         if (stellar_sdk.LiquidityPoolAsset.is_valid_lexicographic_order(testnet_main.pathAsset[i], testnet_main.pathAsset[i+1])):
             liqpool = stellar_sdk.LiquidityPoolAsset(testnet_main.pathAsset[i], testnet_main.pathAsset[i+1], stellar_sdk.LIQUIDITY_POOL_FEE_V18)
@@ -172,9 +186,16 @@ def testnet_main(*, public_key = None, asset_send_code, asset_send_issuer, asset
         elif (stellar_sdk.LiquidityPoolAsset.is_valid_lexicographic_order(testnet_main.pathAsset[i], testnet_main.pathAsset[i+1]) == False):
             liqpool = stellar_sdk.LiquidityPoolAsset(testnet_main.pathAsset[i+1], testnet_main.pathAsset[i], stellar_sdk.LIQUIDITY_POOL_FEE_V18)
             testnet_main.pathAsset[i].order = 1
+
         liqpool_id = liqpool.liquidity_pool_id
         response = requests.get('https://horizon-testnet.stellar.org/liquidity_pools/' + liqpool_id)
         testnet_main.liqpool_details = response.json()
+
+        testnet_main.liqpool_exist = False
+        try:
+            testnet_main.liqpool_details['status'] == 404
+        except:
+            testnet_main.liqpool_exist = True
 
         # fetching orderbook details
         testnet_main.ob_details = server.orderbook(testnet_main.pathAsset[i], testnet_main.pathAsset[i+1]).limit(100).call()
@@ -183,10 +204,9 @@ def testnet_main(*, public_key = None, asset_send_code, asset_send_issuer, asset
         amount_sent_on_orderbook[i] = testnet_main.amount_sent[i] - amount_sent_on_liqpool[i]
         received_interleave[i] = mix(i, amount_sent_on_liqpool[i])
         total_receive = received_interleave[i]
-        print(f"Loop ke-{i}:")
-        print(f"total_receive: {total_receive}")
+        
         if operation_detail == "fetch_amount_receive":
-            testnet_main.amount_sent.append(total_receive*(1-slippage))
+            testnet_main.amount_sent.append(total_receive*(slippage))
             continue
 
         # determining the operation order
@@ -198,8 +218,7 @@ def testnet_main(*, public_key = None, asset_send_code, asset_send_issuer, asset
 
         amount_receive_lp[i] = liqpool_calc_send(i, amount_sent_on_liqpool[i])
         amount_receive_ob[i] = orderbook_calc_send(amount_sent_on_orderbook[i])
-        slippage = float(slippage) / 100
-        slippage = floor(1 - slippage, 4)
+        
 
         if (path_amount_liqpool == amount_receive_lp[i]):
             send_amount1[i] = floor(amount_sent_on_liqpool[i],7)
@@ -212,19 +231,16 @@ def testnet_main(*, public_key = None, asset_send_code, asset_send_issuer, asset
             send_amount1[i] = floor(amount_sent_on_orderbook[i], 7)
             dest_min1[i] = floor(amount_receive_ob[i] * slippage, 7)
 
-        print(f"destmin1: {dest_min1[i]}, destmin2: {dest_min2[i]}")
-        print(f"send1: {send_amount1[i]}, send2: {send_amount2[i]}")
-        print(f"dest1/send1: {dest_min1[i]/send_amount1[i]}, dest2/send2: {dest_min2[i]/send_amount2[i]}")
-
+        # print(f"Loop ke-{i}:\ndestmin1: {dest_min1}, destmin2: {dest_min2}")
         if(send_amount1[i]!=0 and dest_min1[i]!=0):
             Transaction1.append_path_payment_strict_send_op(
                 destination=acc.public_key,
                 send_code=testnet_main.pathAsset[i].code,
                 send_issuer=testnet_main.pathAsset[i].issuer,
-                send_amount=str(send_amount1[i]),
+                send_amount=str(f'{send_amount1[i]:.7f}'),
                 dest_code=testnet_main.pathAsset[i+1].code,
                 dest_issuer=testnet_main.pathAsset[i+1].issuer,
-                dest_min=str(dest_min1[i]),
+                dest_min=str(f'{dest_min1[i]:.7f}'),
                 path=[]
             )
         if(send_amount2[i]!=0 and dest_min2[i]!=0):
@@ -232,16 +248,59 @@ def testnet_main(*, public_key = None, asset_send_code, asset_send_issuer, asset
                 destination=acc.public_key,
                 send_code=testnet_main.pathAsset[i].code,
                 send_issuer=testnet_main.pathAsset[i].issuer,
-                send_amount=str(send_amount2[i]),
+                send_amount=str(f'{send_amount2[i]:.7f}'),
                 dest_code=testnet_main.pathAsset[i+1].code,
                 dest_issuer=testnet_main.pathAsset[i+1].issuer,
-                dest_min=str(dest_min2[i]),
+                dest_min=str(f'{dest_min2[i]:.7f}'),
                 path=[]
             )
         testnet_main.amount_sent.append(dest_min1[i]+dest_min2[i])
     
+    pathresp = server.strict_send_paths(
+        source_asset=testnet_main.asset_send,
+        source_amount=str(f'{testnet_main.amount_sent[0]:.7f}'),
+        destination=destine
+    ).call()
+    path=pathresp['_embedded']['records'][0]
+    usual_path_amount = float(path['destination_amount'])
+    print(f"interleave: {total_receive=}, {usual_path_amount=}")
     if operation_detail == "fetch_amount_receive":
-        return total_receive
+        print(f"{total_receive=}, {usual_path_amount=}")
+        if total_receive < usual_path_amount:
+            print("Usual path payment is better")
+            return (usual_path_amount, 0)
+        return (total_receive, total_receive/usual_path_amount-1)
+    
+    if total_receive < usual_path_amount:
+        print("Usual path payment is better")
+        Transaction = TransactionBuilder(
+            source_account=stellar_account,
+            network_passphrase=Network.TESTNET_NETWORK_PASSPHRASE,
+            base_fee=base_fee,
+        ).add_text_memo('https://neptunus.io')
+
+        path_list = []
+
+        for path_asset in path['path']:
+            if operation_detail == "fetch_xdr":
+                if path_asset['asset_type'] == 'native':
+                    path_list.append(Asset.native())
+                else:
+                    path_list.append(Asset(path_asset['asset_code'], path_asset['asset_issuer']))
+
+        Transaction.append_path_payment_strict_send_op(
+            destination=acc.public_key,
+            send_code=asset_send_code,
+            send_issuer=asset_send_issuer,
+            dest_code=asset_receive_code,
+            dest_issuer=asset_receive_issuer,
+            dest_min=str(round(usual_path_amount*(slippage), 7)),
+            send_amount=str(amount_send),
+            path=path_list
+        )
+
+        Transaction=Transaction.build().to_xdr()
+        return (Transaction, usual_path_amount, 0)
 
     Transaction1=Transaction1.build().to_xdr()
-    return Transaction1
+    return (Transaction1, total_receive, total_receive/usual_path_amount-1)
