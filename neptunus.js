@@ -1,20 +1,15 @@
 const {Server, Asset, LiquidityPoolAsset, LiquidityPoolFeeV18, getLiquidityPoolId, Networks, TransactionBuilder, Operation, MemoText, TimeoutInfinite, Memo} = require('stellar-sdk');
-const clone = require('just-clone');
+
 
 const pathServer = new Server("https://horizon.stellar.org"); //pathfinder horizon instance
 const server = new Server("https://horizon.stellar.org"); 
 
 
 //fee are in bps/0.01% of profit
-const neptunusFee = 800;   //10% of profit
-const platformFee = 200;
+const neptunusFee = 800;   //8% of profit
+const platformFee = 200;   //2% of profit
 const neptunusAddress = 'GAM6VCFJLV4FMUTRXSWNK7OMWBXLNOIHHGGM25LOPF36UP7UZ47MNPTN';
 const platformAddress = neptunusAddress;
-
-//if there's any discount NFT in ze future
-//const discountIssuer='';
-//const discountCode='';
-//const discount=new Asset(discountCode, discountIssuer);
 
 //for storing path details
 let Pathing = class {
@@ -26,7 +21,7 @@ let Pathing = class {
     }
 }
 
-//for simulating the trade
+//for storing market(ob & lp) details
 let MarketDetails = class {
     constructor(assetA, assetB, obDetails, lpDetails){
         this.assetA=assetA;
@@ -36,7 +31,7 @@ let MarketDetails = class {
     }
 }
 
-//for executing tx
+//for storing operation details
 let txInfo = class {
     constructor(sourceAmount, destinationAmount, path){
         this.sourceAmount=sourceAmount,
@@ -62,7 +57,7 @@ function pathReqToObject(sourceAsset, destinationAsset, path){
     return path_temp;
 }
 
-//round to the 7th decimal for building operations
+//round to the 7th decimal for building operations/transaction
 function round(num){
     return (Math.floor(num*10000000)/10000000);
 }
@@ -92,7 +87,7 @@ async function fetchLiqpool(assetA, assetB){
     }
     
 }
-//fetching market detail
+//fetching market detail(lp & ob)
 async function fetchMarket(assetA, assetB){
     let promise_temp=[fetchOrderbook(assetA,assetB), fetchLiqpool(assetA,assetB)];
     let promise_res= await Promise.all(promise_temp);
@@ -112,23 +107,37 @@ function liqpoolSend(sourceAsset, destinationAsset, lpDetails, sourceAmount, typ
     //type execute -> return modified lpDetails
     //type calc -> return destinationAmount
     balance = [0,0]
+
+    //substract liquiditypool fee (0.3% fee)
+    sourceAmount=round(sourceAmount*0.997)
+    //sourceAmount=round(sourceAmount*0.997);
+    //if there's no lp
     if (lpDetails==0){
         return 0;
     }
+
+    //cloning the lpDetails so any modification to it doesn't effect the original lpDetails 
     modifiedLp=JSON.parse(JSON.stringify(lpDetails));
 
+    //getting the pool balance + product
     balance[0]= parseFloat(modifiedLp.reserves[0].amount)
     balance[1]= parseFloat(modifiedLp.reserves[1].amount)
     poolProduct = balance[0] * balance[1];
+    //onsole.log(Number.isSafeInteger(poolProduct));
 
+    //ordering the assets
     temps=orderAssets(sourceAsset, destinationAsset);
     
     sent=0;
     received=1;
+    
     if(Asset.compare(sourceAsset, temps[1])==0){
         sent=1;
         received=0;
     }
+
+
+    //clculating the lp trade
     balance[sent] = balance[sent] + sourceAmount;
     z = poolProduct / balance[sent];
     destinationAmount = round(balance[received] - z);
@@ -139,7 +148,7 @@ function liqpoolSend(sourceAsset, destinationAsset, lpDetails, sourceAmount, typ
         return destinationAmount;
     }
     else if (type=='execute'){
-        return modifiedLp
+        return modifiedLp;
     }
 }
 //simulating orderbook execution
@@ -256,7 +265,7 @@ function pathSend(path, sourceAmount,type){
         sentAmount=receivedPath;
     }
     price=sourceAmount/receivedPath;
-    
+    //console.log(receivedPath, path.path);
     if(type=='calc'){
         return round(receivedPath);
     }
@@ -295,7 +304,8 @@ async function router(sourceAsset, destinationAsset){
     ];
 }
 
-//checking for duplicate from router()
+//checking for duplicate/invalid path from router()
+//didn't check for duplicate path because it doesn't matter
 async function checkpath(_pathList){
     var _result=[];
     for(let i=0;i<_pathList.length;i++){
@@ -341,7 +351,7 @@ async function  neptunusCalculate(sourceAsset, destinationAsset, sourceAmount){
             >If Normal Path Payment yield more result, use normal path payment
     
     */
-    loops=98;
+    loops=20;
     loopsAmount=round(sourceAmount/loops);
     leftover=sourceAmount-loopsAmount*loops; //rounding error
 
@@ -393,7 +403,6 @@ async function  neptunusCalculate(sourceAsset, destinationAsset, sourceAmount){
         }
     }
     promiseMarketResult = await Promise.all(promiseMarket);
-    marketCopy=clone(market);
     var destinationAmount;
     for(let h=0;h<loops;h++){
         temp_result=pathSend(
@@ -410,7 +419,6 @@ async function  neptunusCalculate(sourceAsset, destinationAsset, sourceAmount){
         paths[0].sourceAmount = paths[0].sourceAmount +  temp_result.sourceAmount;
         paths[0].destinationAmount = paths[0].destinationAmount + temp_result.destinationAmount;
         destinationAmount = destinationAmount + temp_result.destinationAmount;
-        //console.log(destinationAmount);
         for (let g=0;g<paths.length;g++){
             paths[g].price=pathSend(
                 paths[g],
@@ -422,7 +430,7 @@ async function  neptunusCalculate(sourceAsset, destinationAsset, sourceAmount){
     }  
     txDetails[0].sourceAmount = round(txDetails[0].sourceAmount + leftover);
     destinationAmount = round(destinationAmount);
-    //console.log(paths);
+    console.log(paths);
     console.log(destinationAmount);
     profit = round(destinationAmount-normalAmount);
     var pathProfit;
