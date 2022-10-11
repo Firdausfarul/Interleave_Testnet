@@ -1,0 +1,241 @@
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@500&display=swap");
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Monserrat", sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  color: #edf0f1;
+  background-image: url("https://img3.goodfon.com/wallpaper/nbig/c/c9/neptun-kosmos-solnechnaya.jpg");
+  background-size: cover;
+  background-position: center;
+}
+
+header {
+  position: sticky;
+  top: 0;
+  display: grid;
+  align-items: center;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  padding: 30px 10%;
+  z-index: 10;
+}
+
+.logo {
+  cursor: pointer;
+}
+
+.account * {
+  padding: 9px 25px;
+  font-weight: 700;
+  font-size: 16px;
+  color: #edf0f1;
+
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease 0s;
+  width: fit-content;
+}
+
+.account .public-key {
+  -webkit-appearance: button;
+  -moz-appearance: button;
+  appearance: button;
+
+  text-decoration: none;
+  background-color: rgb(5, 1, 255, 0.8);
+}
+
+.account .public-key:hover {
+  background-color: rgb(5, 1, 255, 0.6);
+}
+
+.account .refresh {
+  margin-top: 0.2rem;
+  align-items: center;
+  background-color: rgb(255, 94, 1, 0.8);
+}
+
+.account .refresh:hover {
+  background-color: rgb(255, 94, 1, 0.6);
+}
+
+section {
+  position: relative;
+  height: 100vh;
+}
+
+section .section-center {
+  position: absolute;
+  top: 40%;
+  left: 0;
+  right: 0;
+  -webkit-transform: translateY(-50%);
+  transform: translateY(-50%);
+}
+
+.transaction-form {
+  max-width: 642px;
+  width: 100%;
+  margin: auto;
+}
+
+.transaction-form .form-header {
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+.transaction-form .form-header h1 {
+  font-size: 58px;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: #edf0f1;
+  margin: 0px;
+}
+
+.transaction-form .notification {
+  color: #edf0f1;
+  border-radius: 10px;
+  margin-bottom: 25px;
+  font-size: 1.2rem;
+  width: fit-content;
+}
+
+.transaction-form .notification .notification-content {
+  padding: 1rem;
+}
+
+.transaction-form > form {
+  background-color: #181920;
+  padding: 30px 20px;
+  border-radius: 3px;
+  border-bottom: #edf0f1 solid;
+}
+
+.transaction-form .form-group {
+  position: relative;
+  margin-bottom: 15px;
+}
+
+.transaction-form .form-control {
+  background-color: #edf0f1;
+  border: none;
+  height: 45px;
+  border-radius: 3px;
+  -webkit-box-shadow: none;
+  box-shadow: none;
+  font-weight: 400;
+  color: #101113;
+}
+
+.transaction-form .form-control::-webkit-input-placeholder {
+  color: rgba(16, 17, 19, 0.3);
+}
+
+.transaction-form .form-control:-ms-input-placeholder {
+  color: rgba(16, 17, 19, 0.3);
+}
+
+.transaction-form .form-control::placeholder {
+  color: rgba(16, 17, 19, 0.3);
+}
+
+.transaction-form input[type="date"].form-control:invalid {
+  color: rgba(16, 17, 19, 0.3);
+}
+
+.transaction-form select.form-control {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+.transaction-form select.form-control + .select-arrow {
+  position: absolute;
+  right: 0px;
+  bottom: 6px;
+  width: 32px;
+  line-height: 32px;
+  height: 32px;
+  text-align: center;
+  pointer-events: none;
+  color: #101113;
+  font-size: 14px;
+}
+
+.transaction-form select.form-control + .select-arrow:after {
+  content: "\279C";
+  display: block;
+  -webkit-transform: rotate(90deg);
+  transform: rotate(90deg);
+}
+
+.transaction-form .form-label {
+  color: #fff;
+  font-size: 12px;
+  font-weight: 400;
+  margin-bottom: 5px;
+  display: block;
+  text-transform: uppercase;
+}
+
+.transaction-form .balance {
+  margin-top: 5px;
+}
+
+.transaction-form .balance .amount {
+  color: rgb(5, 1, 255, 1);
+  transition: all 0.3s ease 0s;
+  cursor: pointer;
+}
+
+.transaction-form .balance .amount:hover {
+  color: rgb(5, 1, 255, 0.8);
+}
+
+.transaction-form .submit-btn {
+  color: #ffffff;
+  background-color: rgb(5, 1, 255, 1);
+  font-weight: 700;
+  height: 50px;
+  border: none;
+  width: 100%;
+  display: block;
+  border-radius: 3px;
+  text-transform: uppercase;
+}
+
+.list-transaction {
+  max-width: 642px;
+  width: 100%;
+  margin: 2rem auto;
+  background-color: #181920;
+  padding: 30px 20px;
+  border-radius: 3px;
+  border-bottom: #edf0f1 solid;
+}
+
+.list-transaction .list-transaction-header {
+  border-bottom: #edf0f1 solid;
+  font-size: 1.2rem;
+}
+
+.list-transaction .list-transaction-body {
+  margin-top: 0.4rem;
+}
+
+.list-transaction .list-transaction-body ul {
+  list-style: none;
+}
+.list-transaction .list-transaction-body ul li {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 50ch;
+}
