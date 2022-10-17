@@ -1,26 +1,23 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-const Slippage = () => {
+const Slippage = ({ slippage: defaultSlippage, onChange }) => {
   const buttons = [0.1, 0.5];
 
   const slippageRef = useRef();
+  const valueRef = useRef();
 
   const [slippage, setSlippage] = useState(0.1);
   const [chosen, setChosen] = useState(0);
 
+  useEffect(() => onChange(valueRef), [slippage]);
   const clickHandler = (e, index) => {
     e.preventDefault();
     setChosen(index);
-    if (chosen === buttons.length) setSlippage(slippage.current.value);
-    else setSlippage(buttons[buttons]);
+    if (index === buttons.length) setSlippage(slippageRef.current.value);
+    else setSlippage(buttons[index]);
   };
-  const slippageChangeHandler = (e) => {
-    clickHandler(e, buttons.length);
-    if (slippageRef.current.value.length > 3)
-      slippageRef.current.value = slippageRef.current.value.substr(0, 2);
-  };
-  const slippageTextClickHandler = (e) => {
-    if (slippageRef.current.value !== "") clickHandler(e, buttons.length);
+  const changeHandler = (e) => {
+    setSlippage(slippageRef.current.value);
   };
 
   return (
@@ -48,8 +45,6 @@ const Slippage = () => {
             <span className="absolute right-0 pr-2 py-2 cursor-text">%</span>
             <input
               type="number"
-              name="slippage"
-              id="slippage"
               placeholder="0-100"
               ref={slippageRef}
               className={`${
@@ -57,9 +52,15 @@ const Slippage = () => {
                   ? `ring-2 ring-indigo-700 bg-black`
                   : `bg-gray-900`
               } outline-none pl-16 py-2 pr-6 rounded-md duration-200 text-sm text-right w-36`}
-              onClick={(e) => slippageTextClickHandler(e)}
-              onChange={slippageChangeHandler}
-              //   maxLength="2"
+              onClick={(e) => clickHandler(e, buttons.length)}
+              onChange={changeHandler}
+            />
+            <input
+              type="hidden"
+              id="slippage"
+              name="slippage"
+              ref={valueRef}
+              value={slippage}
             />
           </label>
         </div>
