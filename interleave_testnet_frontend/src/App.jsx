@@ -18,6 +18,7 @@ import TransactionForm from "./components/TransactionForm";
 import Result from "./components/Result";
 
 const App = () => {
+  // hello world
   const [state, dispatch] = useReducer(reducer, defaultState);
   const {
     account,
