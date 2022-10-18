@@ -1,28 +1,16 @@
-const Result = () => {
+const Result = ({ averagePrice, profit, profitXLM }) => {
   const results = [
     {
-      name: "Source Asset",
-      value: "5,345.4127 USDC",
-    },
-    {
-      name: "Source Amount",
-      value: "5,345.4127 USDC",
-    },
-    {
-      name: "Destination Asset",
-      value: "5,345.4127 USDC",
-    },
-    {
       name: "Average Price",
-      value: "5,345.4127 USDC",
+      value: averagePrice,
     },
     {
       name: "Profit",
-      value: "5,345.4127 LETH",
+      value: profit,
     },
     {
       name: "Profit in XLM",
-      value: "5,345.4127 XLM",
+      value: profitXLM,
     },
   ];
 
