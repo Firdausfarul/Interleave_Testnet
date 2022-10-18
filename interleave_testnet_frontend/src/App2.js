@@ -98,8 +98,9 @@ function App() {
   };
 
   const handleChange = (e) => {
-    const name = e.target.name;
-    let value = e.target.value;
+    const name = e.current.name;
+    let value = e.current.value;
+    console.log(name);
     if (
       name === "amountSend" ||
       name === "amountReceive" ||
