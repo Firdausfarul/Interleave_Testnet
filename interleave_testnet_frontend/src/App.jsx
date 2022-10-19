@@ -1,4 +1,4 @@
-import { useReducer, useEffect } from "react";
+import { useReducer, useEffect, useState } from "react";
 import axios from "axios";
 import {
   isConnected,
@@ -18,8 +18,10 @@ import TransactionForm from "./components/TransactionForm";
 import Result from "./components/Result";
 
 const App = () => {
-  // hello world
   const [state, dispatch] = useReducer(reducer, defaultState);
+  const [averagePrice, setAveragePrice] = useState();
+  const [profit, setProfit] = useState();
+  const [profitXLM, setProfitXLM] = useState();
   const {
     account,
     assetSend,
@@ -67,37 +69,45 @@ const App = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (account && assetSend && assetReceive && amountSend) {
       dispatch({ type: "PROCESSING_TRANSACTION" });
-      let url = "https://ph7wlb.deta.dev/fetch_xdr?";
-      const params = [];
-      params.push(`public_key=${account.publicKey}&`);
-      params.push(`asset_send_code=${assetSend.code}&`);
-      if (assetSend.code !== "XLM") {
-        params.push(`asset_send_issuer=${assetSend.issuer}&`);
-      }
-      params.push(`asset_receive_code=${assetReceive.code}&`);
-      if (assetReceive.code !== "XLM") {
-        params.push(`asset_receive_issuer=${assetReceive.issuer}&`);
-      }
-      params.push(`amount_send=${amountSend}&`);
-      if (!slippage) {
-        params.push(`slippage=0.01&`);
-      } else {
-        params.push(`slippage=${slippage}&`);
-      }
-      if (account.network === "TESTNET") {
-        params.push(`is_testnet=${true}`);
-      } else if (account.network === "PUBLIC") {
-        params.push(`is_testnet=${false}`);
-      }
+      neptunusCalculate(assetSend, assetReceive, amountSend)
+        .then((res) => {
+          console.log(res);
+        })
+        .catch((err) => console.log(err))
+        .finally(() => {
+          dispatch({ type: "CANNOT_SUBMIT_XDR" });
+        });
+      // let url = "https://ph7wlb.deta.dev/fetch_xdr?";
+      // const params = [];
+      // params.push(`public_key=${account.publicKey}&`);
+      // params.push(`asset_send_code=${assetSend.code}&`);
+      // if (assetSend.code !== "XLM") {
+      //   params.push(`asset_send_issuer=${assetSend.issuer}&`);
+      // }
+      // params.push(`asset_receive_code=${assetReceive.code}&`);
+      // if (assetReceive.code !== "XLM") {
+      //   params.push(`asset_receive_issuer=${assetReceive.issuer}&`);
+      // }
+      // params.push(`amount_send=${amountSend}&`);
+      // if (!slippage) {
+      //   params.push(`slippage=0.01&`);
+      // } else {
+      //   params.push(`slippage=${slippage}&`);
+      // }
+      // if (account.network === "TESTNET") {
+      //   params.push(`is_testnet=${true}`);
+      // } else if (account.network === "PUBLIC") {
+      //   params.push(`is_testnet=${false}`);
+      // }
 
-      params.forEach((param) => {
-        url += param;
-      });
-      submitXDR(url);
+      // params.forEach((param) => {
+      //   url += param;
+      // });
+      // submitXDR(url);
     } else if (account) {
       dispatch({ type: "NO_VALUE" });
     }
@@ -251,7 +261,14 @@ const App = () => {
             closeNotification={closeNotification}
             setMaxBalance={setMaxBalance}
           />
-          <Result />
+          {averagePrice && profit && profitXLM && (
+            <Result
+              averagePrice={averagePrice}
+              profit={profit}
+              profitXLM={profitXLM}
+            />
+          )}
+
           <div></div>
         </div>
       </div>
