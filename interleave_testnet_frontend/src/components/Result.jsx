@@ -20,7 +20,7 @@ const Result = ({ averagePrice, profit, profitXLM }) => {
         {results.map((result) => (
           <div className="flex justify-between" key={result.name}>
             <p className="text-gray-400">{result.name}</p>
-            <p className="text-white">{result.value}</p>
+            <p className="text-white text-right">{result.value}</p>
           </div>
         ))}
       </div>

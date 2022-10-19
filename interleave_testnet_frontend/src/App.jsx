@@ -22,6 +22,7 @@ const App = () => {
   const [averagePrice, setAveragePrice] = useState();
   const [profit, setProfit] = useState();
   const [profitXLM, setProfitXLM] = useState();
+  const [resultReceive, setResultReceive] = useState();
   const {
     account,
     assetSend,
@@ -88,13 +89,17 @@ const App = () => {
       }
       neptunusCalculate(sourceAsset, destinationAsset, amountSend)
         .then((res) => {
-          setAveragePrice(res.averagePrice);
-          setProfit(res.profit);
-          setProfitXLM(res.profitInXLM);
+          setAveragePrice(
+            `1 ${res.sourceAsset.code} = ${res.averagePrice} ${res.destinationAsset.code}`
+          );
+          setProfit(`${res.profit} ${res.destinationAsset.code}`);
+          setProfitXLM(`${res.profitInXLM} XLM`);
+          setResultReceive(res.destinationAmount);
+          dispatch({ type: "SUCCESS_SUBMIT_XDR" });
         })
         .catch((err) => console.log(err))
         .finally(() => {
-          dispatch({ type: "CANNOT_SUBMIT_XDR" });
+          // dispatch({ type: "CANNOT_SUBMIT_XDR" });
         });
       // let url = "https://ph7wlb.deta.dev/fetch_xdr?";
       // const params = [];
@@ -275,6 +280,7 @@ const App = () => {
             loginFreighter={loginFreighter}
             closeNotification={closeNotification}
             setMaxBalance={setMaxBalance}
+            resultReceive={resultReceive}
           />
           {averagePrice && profit && profitXLM && (
             <Result
