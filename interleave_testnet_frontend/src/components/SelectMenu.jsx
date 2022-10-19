@@ -6,7 +6,7 @@ import _ from "lodash";
 const avatars = [
   {
     code: "Select Asset",
-    avatar: "question.png",
+    avatar: "none.png",
   },
   {
     name: "TERN",
@@ -201,7 +201,7 @@ const SelectMenu = ({ listAsset, assetReceive, name, onChange }) => {
                               <img
                                 src={`/currencies/${
                                   avatars.find((av) => av.name == asset.code)
-                                    ?.avatar
+                                    ?.avatar ?? avatars[0].avatar
                                 }`}
                                 alt=""
                                 className="h-6 w-6 flex-shrink-0 rounded-full"

@@ -9,10 +9,13 @@ const Notification = ({
   useEffect(() => {
     setTimeout(() => {
       closeNotification();
-    }, 50000);
+    }, 10000);
   });
   return (
-    <div className="bg-yellow-600 text-white px-4 py-2 rounded-md border-2 border-yellow-500 text-sm flex justify-between">
+    <div
+      style={{ background: notificationColor }}
+      className=" text-white px-4 py-2 rounded-md border-2 border-gray-700 text-sm flex justify-between"
+    >
       <span>{notificationContent}</span>
       <button onClick={closeNotification}>
         <XMarkIcon

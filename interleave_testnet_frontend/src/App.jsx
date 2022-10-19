@@ -6,9 +6,9 @@ import {
   getNetwork,
   signTransaction,
 } from "@stellar/freighter-api";
-import StellarSdk from "stellar-sdk";
+import StellarSdk, { Asset } from "stellar-sdk";
 
-import { neptunusCalculate } from "./lib/neptunus";
+import { neptunusCalculate, neptunusExecute } from "./lib/neptunus";
 
 import { reducer } from "./reducer";
 import { defaultState } from "./defaultState";
@@ -22,6 +22,8 @@ const App = () => {
   const [averagePrice, setAveragePrice] = useState();
   const [profit, setProfit] = useState();
   const [profitXLM, setProfitXLM] = useState();
+  const [resultReceive, setResultReceive] = useState();
+  const [transactions, setTransactions] = useState([]);
   const {
     account,
     assetSend,
@@ -38,6 +40,10 @@ const App = () => {
     } catch (e) {
       return e;
     }
+  };
+
+  const round = (num) => {
+    return Math.floor(num * 10000000) / 10000000;
   };
   const submitXDR = async (url) => {
     try {
@@ -72,15 +78,79 @@ const App = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (account && assetSend && assetReceive && amountSend) {
+      // console.log({ assetSend, assetReceive });
       dispatch({ type: "PROCESSING_TRANSACTION" });
-      neptunusCalculate(assetSend, assetReceive, amountSend)
-        .then((res) => {
+      let sourceAsset, destinationAsset;
+      if (assetSend.code == "XLM" && assetSend.issuer == "None") {
+        sourceAsset = new Asset.native();
+      } else {
+        sourceAsset = new Asset(assetSend.code, assetSend.issuer);
+      }
+
+      if (assetReceive.code == "XLM" && assetReceive.issuer == "None") {
+        destinationAsset = new Asset.native();
+      } else {
+        destinationAsset = new Asset(assetReceive.code, assetReceive.issuer);
+      }
+
+      neptunusExecute(
+        sourceAsset,
+        destinationAsset,
+        account.publicKey,
+        amountSend,
+        slippage
+      )
+        .then(async (res) => {
           console.log(res);
+          try {
+            let xdr = res;
+            xdr = await signTransaction(xdr, account.network);
+            let SERVER_URL = "";
+            if (account.network === "TESTNET") {
+              SERVER_URL = `https://horizon-testnet.stellar.org`;
+            } else if (account.network === "PUBLIC") {
+              SERVER_URL = `https://horizon.stellar.org`;
+            }
+            const server = new StellarSdk.Server(SERVER_URL);
+            const transactionToSubmit = StellarSdk.TransactionBuilder.fromXDR(
+              xdr,
+              SERVER_URL
+            );
+            const response = await server.submitTransaction(
+              transactionToSubmit
+            );
+            dispatch({ type: "SUCCESS_SUBMIT_XDR" });
+            const name = "listTransaction";
+            const newId = response.id;
+            const value = [
+              ...listTransaction,
+              { network: account.network.toLowerCase(), id: newId },
+            ];
+            // setTransactions([res, ...transactions]);
+            dispatch({ type: "CHANGE_VALUE", payload: { name, value } });
+          } catch {
+            dispatch({ type: "CANNOT_SUBMIT_XDR" });
+          }
+          // dispatch({ type: "SUCCESS_SUBMIT_XDR" });
         })
-        .catch((err) => console.log(err))
-        .finally(() => {
+        .catch((err) => {
+          console.log(err);
           dispatch({ type: "CANNOT_SUBMIT_XDR" });
         });
+      // neptunusCalculate(sourceAsset, destinationAsset, amountSend)
+      //   .then((res) => {
+      //     setAveragePrice(
+      //       `1 ${res.sourceAsset.code} = ${res.averagePrice} ${res.destinationAsset.code}`
+      //     );
+      //     setProfit(`${res.profit} ${res.destinationAsset.code}`);
+      //     setProfitXLM(`${res.profitInXLM} XLM`);
+      //     setResultReceive(res.destinationAmount);
+      //     dispatch({ type: "SUCCESS_SUBMIT_XDR" });
+      //   })
+      //   .catch((err) => console.log(err))
+      //   .finally(() => {
+      //     // dispatch({ type: "CANNOT_SUBMIT_XDR" });
+      //   });
       // let url = "https://ph7wlb.deta.dev/fetch_xdr?";
       // const params = [];
       // params.push(`public_key=${account.publicKey}&`);
@@ -117,6 +187,11 @@ const App = () => {
     // console.log(e);
     const name = e.current.name;
     let value = e.current.value;
+    if (name === "amountSend" || name === "amountReceive") {
+      // e.current.value = round(e.current.value);
+      // console.log(round(e.current.value));
+      value = round(e.current.value);
+    }
     if (
       name === "amountSend" ||
       name === "amountReceive" ||
@@ -191,44 +266,70 @@ const App = () => {
   };
 
   useEffect(() => {
+    const getAmountReceive = async () => {
+      // dispatch({ type: "PROCESSING_TRANSACTION" });
+      let sourceAsset, destinationAsset;
+      if (assetSend.code == "XLM" && assetSend.issuer == "None") {
+        sourceAsset = new Asset.native();
+      } else {
+        sourceAsset = new Asset(assetSend.code, assetSend.issuer);
+      }
+
+      if (assetReceive.code == "XLM" && assetReceive.issuer == "None") {
+        destinationAsset = new Asset.native();
+      } else {
+        destinationAsset = new Asset(assetReceive.code, assetReceive.issuer);
+      }
+      neptunusCalculate(sourceAsset, destinationAsset, amountSend)
+        .then((res) => {
+          setAveragePrice(
+            `1 ${res.sourceAsset.code} = ${res.averagePrice} ${res.destinationAsset.code}`
+          );
+          setProfit(`${res.profit} ${res.destinationAsset.code}`);
+          setProfitXLM(`${res.profitInXLM} XLM`);
+          setResultReceive(round(res.destinationAmount));
+          // dispatch({ type: "SUCCESS_SUBMIT_XDR" });
+        })
+        .catch((err) => console.log(err));
+    };
     if (account && amountSend && assetSend && assetReceive && amountSend >= 0) {
-      const getAmountReceive = async (url) => {
-        try {
-          const name = "amountReceive";
-          const value = await fetchUrl(url).then((data) => {
-            return data.amount_receive;
-          });
-          dispatch({
-            type: "CHANGE_VALUE",
-            payload: { name, value },
-          });
-        } catch {
-          dispatch({ type: "CANNOT_GET_AMOUNT_RECEIVE" });
-        }
-      };
-      let url = "https://ph7wlb.deta.dev/fetch_amount_receive?";
-      const params = [];
-      params.push(`asset_send_code=${assetSend.code}&`);
-      if (assetSend.code !== "XLM") {
-        params.push(`asset_send_issuer=${assetSend.issuer}&`);
-      }
-      params.push(`asset_receive_code=${assetReceive.code}&`);
-      if (assetReceive.code !== "XLM") {
-        params.push(`asset_receive_issuer=${assetReceive.issuer}&`);
-      }
-      params.push(`amount_send=${amountSend}&`);
-      if (account.network === "TESTNET") {
-        params.push(`is_testnet=${true}`);
-      } else if (account.network === "PUBLIC") {
-        params.push(`is_testnet=${false}`);
-      }
-      params.forEach((param) => {
-        url += param;
-      });
-      getAmountReceive(url);
+      // const getAmountReceive = async (url) => {
+      //   try {
+      //     const name = "amountReceive";
+      //     const value = await fetchUrl(url).then((data) => {
+      //       return data.amount_receive;
+      //     });
+      //     dispatch({
+      //       type: "CHANGE_VALUE",
+      //       payload: { name, value },
+      //     });
+      //   } catch {
+      //     dispatch({ type: "CANNOT_GET_AMOUNT_RECEIVE" });
+      //   }
+      // };
+      // let url = "https://ph7wlb.deta.dev/fetch_amount_receive?";
+      // const params = [];
+      // params.push(`asset_send_code=${assetSend.code}&`);
+      // if (assetSend.code !== "XLM") {
+      //   params.push(`asset_send_issuer=${assetSend.issuer}&`);
+      // }
+      // params.push(`asset_receive_code=${assetReceive.code}&`);
+      // if (assetReceive.code !== "XLM") {
+      //   params.push(`asset_receive_issuer=${assetReceive.issuer}&`);
+      // }
+      // params.push(`amount_send=${amountSend}&`);
+      // if (account.network === "TESTNET") {
+      //   params.push(`is_testnet=${true}`);
+      // } else if (account.network === "PUBLIC") {
+      //   params.push(`is_testnet=${false}`);
+      // }
+      // params.forEach((param) => {
+      //   url += param;
+      // });
+      getAmountReceive();
       const interval = setInterval(() => {
-        getAmountReceive(url);
-      }, 10000);
+        getAmountReceive();
+      }, 30000);
 
       return () => clearInterval(interval);
     } else if (!amountSend) {
@@ -260,11 +361,13 @@ const App = () => {
             loginFreighter={loginFreighter}
             closeNotification={closeNotification}
             setMaxBalance={setMaxBalance}
+            resultReceive={resultReceive}
           />
           {averagePrice && profit && profitXLM && (
             <Result
               averagePrice={averagePrice}
               profit={profit}
+              transactions={listTransaction}
               profitXLM={profitXLM}
             />
           )}
