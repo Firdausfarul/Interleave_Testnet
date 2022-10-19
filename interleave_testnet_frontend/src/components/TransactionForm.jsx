@@ -13,6 +13,7 @@ const TransactionForm = (props) => {
     loginFreighter,
     closeNotification,
     setMaxBalance,
+    resultReceive,
   } = props;
   const {
     account,
@@ -38,61 +39,83 @@ const TransactionForm = (props) => {
             closeNotification={closeNotification}
           />
         )}
-        <div className="flex space-x-1">
-          <label
-            htmlFor="amount"
-            className="relative block text-white flex-grow"
-          >
-            <span className="absolute text-xs pl-2 pt-2 cursor-text">
-              AMOUND SEND
-            </span>
-            <input
-              type="number"
-              step={0.0000001}
-              id="amountSend"
-              name="amountSend"
-              value={amountSend}
-              ref={assetSendRef}
-              onChange={() => handleChange(assetSendRef)}
-              min="0"
-              placeholder="0.0000000"
-              className=" outline-none px-2 pt-4 pb-2 bg-gray-900 rounded-l-lg text-lg focus:bg-black focus:ring-2 focus:ring-blue-800 duration-200 w-full"
+        <div className="flex flex-col space-y-2">
+          <div className="flex space-x-1">
+            <label
+              htmlFor="amount"
+              className="relative block text-white flex-grow"
+            >
+              <span className="absolute text-xs pl-2 pt-2 cursor-text truncate">
+                AMOUND SEND
+              </span>
+              <input
+                type="number"
+                step={0.0000001}
+                id="amountSend"
+                name="amountSend"
+                value={amountSend}
+                ref={assetSendRef}
+                onChange={() => handleChange(assetSendRef)}
+                min="0"
+                placeholder="0.0000000"
+                className=" outline-none px-2 pt-4 pb-2 bg-gray-900 rounded-l-lg text-lg focus:bg-black focus:ring-2 focus:ring-blue-800 duration-200 w-full"
+              />
+            </label>
+            <SelectMenu
+              listAsset={account ? account.listAsset : []}
+              name="assetSend"
+              onChange={handleChange}
+              assetReceive={assetReceive}
             />
-          </label>
-          <SelectMenu
-            listAsset={account ? account.listAsset : []}
-            name="assetSend"
-            onChange={handleChange}
-            assetReceive={assetReceive}
-          />
+          </div>
+          {assetSend && account && assetSend.code !== "Select Asset" && (
+            <span className="text-sm text-gray-200">
+              Balances{" "}
+              <span className=" text-white" onClick={setMaxBalance}>
+                {assetSend.balance}
+              </span>
+              {` ${assetSend.code}`}
+            </span>
+          )}
         </div>
-        <div className="flex space-x-1">
-          <label
-            htmlFor="recieved"
-            className="relative block text-white flex-grow"
-          >
-            <span className="absolute text-xs pl-2 pt-2 cursor-default">
-              ESTIMATED AMOUNT RECEIVED
-            </span>
-            <input
-              type="number"
-              step={0.0000001}
-              id="amountReceive"
-              name="amountReceive"
-              value={amountReceive}
-              ref={assetReceiveRef}
-              onChange={() => handleChange(assetReceiveRef)}
-              readOnly
-              placeholder="0.0000000"
-              className=" outline-none px-2 pt-4 pb-2 bg-gray-900 rounded-l-lg text-lg focus:bg-black focus:ring-2 focus:ring-blue-800 duration-200 w-full cursor-default"
+        <div className="flex flex-col space-y-2">
+          <div className="flex space-x-1">
+            <label
+              htmlFor="recieved"
+              className="relative block text-white flex-grow"
+            >
+              <span className="absolute text-xs pl-2 pt-2 cursor-default truncate">
+                ESTIMATED AMOUNT RECEIVED
+              </span>
+              <input
+                type="number"
+                step={0.0000001}
+                id="amountReceive"
+                name="amountReceive"
+                value={resultReceive}
+                ref={assetReceiveRef}
+                onChange={() => handleChange(assetReceiveRef)}
+                readOnly
+                placeholder="0.0000000"
+                className=" outline-none px-2 pt-4 pb-2 bg-gray-900 rounded-l-lg text-lg focus:bg-black focus:ring-2 focus:ring-blue-800 duration-200 w-full cursor-default"
+              />
+            </label>
+            <SelectMenu
+              listAsset={account ? account.listAsset : []}
+              name="assetReceive"
+              onChange={handleChange}
+              assetReceive={assetReceive}
             />
-          </label>
-          <SelectMenu
-            listAsset={account ? account.listAsset : []}
-            name="assetReceive"
-            onChange={handleChange}
-            assetReceive={assetReceive}
-          />
+          </div>
+          {assetReceive && account && assetReceive.code !== "Select Asset" && (
+            <span className="text-sm text-gray-200">
+              Balances{" "}
+              <span className=" text-white" onClick={setMaxBalance}>
+                {assetReceive.balance}
+              </span>
+              {` ${assetReceive.code}`}
+            </span>
+          )}
         </div>
         <Slippage slippage={slippage} onChange={handleChange} />
         <input
