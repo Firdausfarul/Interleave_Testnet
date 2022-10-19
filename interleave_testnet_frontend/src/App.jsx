@@ -88,7 +88,9 @@ const App = () => {
       }
       neptunusCalculate(sourceAsset, destinationAsset, amountSend)
         .then((res) => {
-          console.log(res);
+          setAveragePrice(res.averagePrice);
+          setProfit(res.profit);
+          setProfitXLM(res.profitInXLM);
         })
         .catch((err) => console.log(err))
         .finally(() => {
