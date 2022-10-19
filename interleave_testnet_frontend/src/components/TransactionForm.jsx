@@ -69,13 +69,31 @@ const TransactionForm = (props) => {
             />
           </div>
           {assetSend && account && assetSend.code !== "Select Asset" && (
-            <span className="text-sm text-gray-200">
-              Balances:{" "}
-              <span className=" text-white" onClick={setMaxBalance}>
-                {assetSend.balance}
+            <div className="flex space-x-5 justify-between">
+              <span className="text-sm text-gray-300">
+                Balances:{" "}
+                <span
+                  className=" text-indigo-600 hover:text-indigo-700 transition duration-200 cursor-pointer"
+                  onClick={setMaxBalance}
+                >
+                  {`${assetSend.balance} ${assetSend.code}`}
+                </span>
               </span>
-              {` ${assetSend.code}`}
-            </span>
+              <a
+                className="text-indigo-600 hover:text-indigo-700 transition duration-200 w-32 text-sm truncate text-right"
+                rel="noopener noreferrer"
+                target="_blank"
+                href={
+                  assetSend.code == "XLM"
+                    ? `https://stellar.expert/explorer/public/asset/XLM`
+                    : `https://stellar.expert/explorer/public/asset/${assetSend.code}-${assetSend.issuer}`
+                }
+              >
+                {assetSend.code == "XLM"
+                  ? `XLM`
+                  : `${assetSend.code}-${assetSend.issuer}`}
+              </a>
+            </div>
           )}
         </div>
         <div className="flex flex-col space-y-2">
@@ -108,13 +126,28 @@ const TransactionForm = (props) => {
             />
           </div>
           {assetReceive && account && assetReceive.code !== "Select Asset" && (
-            <span className="text-sm text-gray-200">
-              Balances:{" "}
-              <span className=" text-white" onClick={setMaxBalance}>
-                {assetReceive.balance}
+            <div className="flex space-x-5 justify-between">
+              <span className="text-sm text-gray-300">
+                Balances:{" "}
+                <span className=" text-indigo-600">
+                  {`${assetReceive.balance} ${assetReceive.code}`}
+                </span>
               </span>
-              {` ${assetReceive.code}`}
-            </span>
+              <a
+                className="text-indigo-600 hover:text-indigo-700 transition duration-200 w-32 text-sm truncate text-right"
+                rel="noopener noreferrer"
+                target="_blank"
+                href={
+                  assetReceive.code == "XLM"
+                    ? `https://stellar.expert/explorer/public/asset/XLM`
+                    : `https://stellar.expert/explorer/public/asset/${assetReceive.code}-${assetReceive.issuer}`
+                }
+              >
+                {assetReceive.code == "XLM"
+                  ? `XLM`
+                  : `${assetReceive.code}-${assetReceive.issuer}`}
+              </a>
+            </div>
           )}
         </div>
         <Slippage slippage={slippage} onChange={handleChange} />
