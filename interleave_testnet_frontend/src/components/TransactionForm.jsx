@@ -70,7 +70,7 @@ const TransactionForm = (props) => {
           </div>
           {assetSend && account && assetSend.code !== "Select Asset" && (
             <span className="text-sm text-gray-200">
-              Balances{" "}
+              Balances:{" "}
               <span className=" text-white" onClick={setMaxBalance}>
                 {assetSend.balance}
               </span>
@@ -109,7 +109,7 @@ const TransactionForm = (props) => {
           </div>
           {assetReceive && account && assetReceive.code !== "Select Asset" && (
             <span className="text-sm text-gray-200">
-              Balances{" "}
+              Balances:{" "}
               <span className=" text-white" onClick={setMaxBalance}>
                 {assetReceive.balance}
               </span>
