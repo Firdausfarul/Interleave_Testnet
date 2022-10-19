@@ -6,7 +6,7 @@ import {
   getNetwork,
   signTransaction,
 } from "@stellar/freighter-api";
-import StellarSdk from "stellar-sdk";
+import StellarSdk, { Asset } from "stellar-sdk";
 
 import { neptunusCalculate } from "./lib/neptunus";
 
@@ -72,8 +72,21 @@ const App = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (account && assetSend && assetReceive && amountSend) {
+      // console.log({ assetSend, assetReceive });
       dispatch({ type: "PROCESSING_TRANSACTION" });
-      neptunusCalculate(assetSend, assetReceive, amountSend)
+      let sourceAsset, destinationAsset;
+      if (assetSend.code == "XLM" && assetSend.issuer == "None") {
+        sourceAsset = new Asset.native();
+      } else {
+        sourceAsset = new Asset(assetSend.code, assetSend.issuer);
+      }
+
+      if (assetReceive.code == "XLM" && assetReceive.issuer == "None") {
+        destinationAsset = new Asset.native();
+      } else {
+        destinationAsset = new Asset(assetReceive.code, assetReceive.issuer);
+      }
+      neptunusCalculate(sourceAsset, destinationAsset, amountSend)
         .then((res) => {
           console.log(res);
         })
