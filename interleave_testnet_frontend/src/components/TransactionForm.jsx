@@ -69,12 +69,11 @@ const TransactionForm = (props) => {
             />
           </div>
           {assetSend && account && assetSend.code !== "Select Asset" && (
-            <span className="text-sm text-gray-200">
+            <span className="text-sm text-gray-300">
               Balances:{" "}
-              <span className=" text-white" onClick={setMaxBalance}>
-                {assetSend.balance}
+              <span className=" text-white underline" onClick={setMaxBalance}>
+                {`${assetSend.balance} ${assetSend.code}`}
               </span>
-              {` ${assetSend.code}`}
             </span>
           )}
         </div>
@@ -108,12 +107,11 @@ const TransactionForm = (props) => {
             />
           </div>
           {assetReceive && account && assetReceive.code !== "Select Asset" && (
-            <span className="text-sm text-gray-200">
+            <span className="text-sm text-gray-300">
               Balances:{" "}
-              <span className=" text-white" onClick={setMaxBalance}>
-                {assetReceive.balance}
+              <span className=" text-white underline">
+                {`${assetReceive.balance} ${assetReceive.code}`}
               </span>
-              {` ${assetReceive.code}`}
             </span>
           )}
         </div>
