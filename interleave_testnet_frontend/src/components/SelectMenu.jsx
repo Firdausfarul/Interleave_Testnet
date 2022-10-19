@@ -6,7 +6,7 @@ import _ from "lodash";
 const avatars = [
   {
     code: "Select Asset",
-    avatar: "question.png",
+    avatar: "none.png",
   },
   {
     name: "TERN",
