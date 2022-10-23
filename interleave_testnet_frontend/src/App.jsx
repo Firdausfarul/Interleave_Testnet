@@ -326,7 +326,9 @@ const App = () => {
       // params.forEach((param) => {
       //   url += param;
       // });
-      getAmountReceive();
+      setTimeout(() => {
+        getAmountReceive();
+      }, 1000);
       const interval = setInterval(() => {
         getAmountReceive();
       }, 30000);
