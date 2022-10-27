@@ -229,6 +229,12 @@ const App = () => {
   };
 
   useEffect(() => {
+    setAveragePrice(
+      `Loading...`
+    );
+    setProfit(`Loading...`);
+    setProfitXLM(`Loading...`);
+    setResultReceive("Loading...");
     const getAmountReceive = async () => {
       // dispatch({ type: "PROCESSING_TRANSACTION" });
       let sourceAsset, destinationAsset;
@@ -246,6 +252,7 @@ const App = () => {
       temps2=amountSend;
       temps3=sourceAsset;
       temps4=destinationAsset;
+
       neptunusCalculate(sourceAsset, destinationAsset, amountSend)
         .then((res) => {
           if(res.sourceAmount==temps2 && res.sourceAsset==temps3 && res.destinationAsset==temps4){
@@ -255,7 +262,6 @@ const App = () => {
             setProfit(`${res.profit} ${res.destinationAsset.code}`);
             setProfitXLM(`${res.profitInXLM} XLM`);
             setResultReceive(round(res.destinationAmount));
-            // dispatch({ type: "SUCCESS_SUBMIT_XDR" });  
           }})
         .catch((err) => console.log(err));
     };
