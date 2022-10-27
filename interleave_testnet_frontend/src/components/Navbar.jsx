@@ -18,7 +18,7 @@ const Navbar = (props) => {
       {publicKey && (
         <div className="flex space-x-2 items-center">
           <a
-            href={`https://stellar.expert/explorer/testnet/account/${publicKey}`}
+            href={`https://stellar.expert/explorer/public/account/${publicKey}`}
             target="_blank"
             rel="noopener noreferrer"
             className=" bg-gray-800 hover:bg-gray-700 text-gray-100 hover:text-white duration-200 px-3 py-2 text-xs rounded-lg w-48 truncate"
