@@ -422,7 +422,10 @@ export async function neptunusCalculate(
   destinationAsset,
   sourceAmount
 ) {
+  console.log(sourceAmount)
+  market = [];
   //fetching path and parsing it
+  console.log(market);
   var pathResponse = await pathServer
     .strictSendPaths(sourceAsset, sourceAmount.toString(), [destinationAsset])
     .limit(5)
@@ -431,7 +434,6 @@ export async function neptunusCalculate(
   var normalAmount = parseFloat(pathsList[0].destination_amount);
   var destinationAmount = 0;
   var pairsList = [];
-  var market = [];
   var paths = [];
   var txDetails = [];
   /*Edgecase :
@@ -508,7 +510,7 @@ export async function neptunusCalculate(
   //waiting for all market details to be fetched
   var promiseMarketResult = await Promise.all(promiseMarket);
 
-  var destinationAmount;
+  var destinationAmount =0;
   //choosing the best path each loop
   for (let h = 0; h < loops; h++) {
     //execute pathSend()
@@ -540,6 +542,7 @@ export async function neptunusCalculate(
   txDetails[0].sourceAmount = round(txDetails[0].sourceAmount + leftover);
   destinationAmount = round(destinationAmount);
   var profit = round(destinationAmount - normalAmount);
+  console.log("Profit : " + profit);
   var pathProfit;
   var profitInXLM;
   //calculating profit from this algorithm

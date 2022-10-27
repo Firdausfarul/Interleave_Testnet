@@ -25,7 +25,7 @@ const Navbar = (props) => {
           >
             {publicKey}
           </a>
-          <button>
+          <button onClick={loginFreighter}>
             <ArrowPathIcon
               className="h-6 w-6 text-gray-100 hover:text-white duration-200 hover:scale-125 hover:rotate-180 transform"
               aria-hidden="true"
